@@ -1,0 +1,22 @@
+{
+  "name": "green-bot",
+  "version": "1.0.0",
+  "description": "This is a Discord Bot",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "discord"
+  ],
+  "author": "GreenM4x",
+  "license": "ISC",
+  "dependencies": {
+    "@napi-rs/canvas": "^0.1.39",
+    "discord.js": "^14.8.0",
+    "dotenv": "^16.0.3"
+  },
+  "devDependencies": {
+    "eslint": "^8.36.0"
+  }
+}
