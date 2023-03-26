@@ -6,7 +6,7 @@
 # RUN npm run build
 
 
-FROM node:16-alpine
+FROM node:18-alpine
 LABEL name="dank"
 WORKDIR /GreenBot
 COPY ./package*.json ./
