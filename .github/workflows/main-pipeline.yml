@@ -54,32 +54,31 @@ jobs:
           platforms: linux/amd64
           push: true
 
-  # TODO
-  # run-on-nuc:
-  #   runs-on: NUC-runner # Self hosted Intel NUC runner
-  #   environment: production
-  #   needs: docker-build-and-push
-  #   steps:
-  #     # Checkout repo to get docker compose file (can maybe provided from previous job later)
-  #     - name: Checkout
-  #       uses: actions/checkout@v3
+  run-on-nuc:
+    runs-on: NUC-runner # Self hosted Intel NUC runner
+    environment: production
+    needs: docker-build-and-push
+    steps:
+      # Checkout repo to get docker compose file (can maybe provided from previous job later)
+      - name: Checkout
+        uses: actions/checkout@v3
 
-  #     - name: Login to Github Container Registry
-  #       uses: docker/login-action@v2
-  #       with:
-  #         registry: ghcr.io
-  #         username: ${{ github.repository_owner }}
-  #         password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Login to Github Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-  #     - name: Pull latest docker image
-  #       run: docker pull ${{ env.DOCKER_IMAGE }}:latest
+      - name: Pull latest docker image
+        run: docker pull ${{ env.DOCKER_IMAGE }}:latest
 
-  #     - name: Run docker image
-  #       run: docker compose up -d --build
-  #       env:
-  #         DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
-  #         CLIENT_ID: ${{ secrets.CLIENT_ID }}
-  #         GUILD_ID: ${{ secrets.GUILD_ID }}
+      - name: Run docker image
+        run: docker compose up -d --build
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          GUILD_ID: ${{ secrets.GUILD_ID }}
 
-  #     - name: Remove old unused image
-  #       run: docker image prune -a -f --filter "label=name=dank"
+      - name: Remove old unused image
+        run: docker image prune -a -f --filter "label=name=dank"
