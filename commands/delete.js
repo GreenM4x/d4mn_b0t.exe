@@ -64,6 +64,9 @@ module.exports = {
       console.log("Data saved successfully");
     });
 
-    await interaction.reply({ content: "DEL", ephemeral: true });
+    await interaction.reply({
+      content: "Your card was deleted!",
+      ephemeral: true,
+    });
   },
 };
