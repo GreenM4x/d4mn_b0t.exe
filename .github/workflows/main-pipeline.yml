@@ -10,7 +10,7 @@ on:
     branches: ["main"]
 
 env:
-  DOCKER_IMAGE: ghcr.io/GreenM4x/GreenBot
+  DOCKER_IMAGE: ghcr.io/greenm4x/greenbot
 
 jobs:
   docker-build-and-push:
