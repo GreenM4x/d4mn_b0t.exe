@@ -13,4 +13,4 @@ COPY ./package*.json ./
 RUN npm ci --production
 COPY ./ ./
 RUN npm install pm2 -g
-CMD ["pm2-runtime", "src/index.js", "--node-args='--es-module-specifier-resolution=node'"]
+CMD ["pm2-runtime", "index.js", "--node-args='--es-module-specifier-resolution=node'"]
