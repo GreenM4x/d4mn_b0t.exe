@@ -1,20 +1,17 @@
-const { writeDb } = require("./dbFunctions")
+const { writeDb } = require("./dbFunctions");
 const { readDb } = require("./dbFunctions");
 
 var cardId = 777;
 var data = require("../db.json");
 
-
 const CardArry = data[2].userCardId;
 
 var newCardArry = CardArry.slice();
 newCardArry.push(cardId);
-console.log(newCardArry)
+console.log(newCardArry);
 const dataObj = {
-    userId: 4,
-    userCardId: newCardArry
-}
-
-
+  userId: 4,
+  userCardId: newCardArry,
+};
 
 writeDb(dataObj);

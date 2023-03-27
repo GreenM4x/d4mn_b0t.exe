@@ -9,9 +9,7 @@ module.exports = {
     .addStringOption((option) =>
       option
         .setName("id")
-        .setDescription(
-          " Position of the card in your binder, you want to delete"
-        )
+        .setDescription(" Position of the card in your binder, you want to delete")
         .setRequired(true)
     ),
   async execute(interaction) {
@@ -36,20 +34,14 @@ module.exports = {
 
     var userCardRarityArray = binder[dbIndex].userCardRarity;
 
-    console.log(
-      userCardArray[cardDelId - 1] + "   " + userCardRarityArray[cardDelId - 1]
-    );
+    console.log(userCardArray[cardDelId - 1] + "   " + userCardRarityArray[cardDelId - 1]);
 
-    var index = binder[dbIndex].userCardId.indexOf(
-      userCardArray[cardDelId - 1]
-    );
+    var index = binder[dbIndex].userCardId.indexOf(userCardArray[cardDelId - 1]);
     if (index !== -1) {
       binder[dbIndex].userCardId.splice(index, 1);
     }
 
-    var index2 = binder[dbIndex].userCardRarity.indexOf(
-      userCardRarityArray[cardDelId - 1]
-    );
+    var index2 = binder[dbIndex].userCardRarity.indexOf(userCardRarityArray[cardDelId - 1]);
     if (index2 !== -1) {
       binder[dbIndex].userCardRarity.splice(index, 1);
     }

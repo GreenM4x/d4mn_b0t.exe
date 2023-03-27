@@ -12,9 +12,7 @@ const { readDb } = require("../db/dbFunctions");
 var timeout = [];
 
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName("binder")
-    .setDescription("Show the cards you collected"),
+  data: new SlashCommandBuilder().setName("binder").setDescription("Show the cards you collected"),
   async execute(interaction) {
     var binder = readDb();
     var dbIndex;
@@ -422,8 +420,7 @@ module.exports = {
       });
       if (arraySize > 4) {
         await interaction.followUp({
-          content:
-            "Binder closed after a while the energy needed to keep it open was too big",
+          content: "Binder closed after a while the energy needed to keep it open was too big",
           ephemeral: true,
         });
       }
