@@ -155,6 +155,6 @@ module.exports = {
     timeout.push(interaction.user.id);
     setTimeout(() => {
       timeout.shift();
-    }, 10);
+    }, 900000);
   },
 };
