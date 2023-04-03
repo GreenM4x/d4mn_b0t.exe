@@ -12,7 +12,7 @@ services:
       - GUILD_ID=${GUILD_ID}
     restart: unless-stopped
     volumes:
-      - ../database/db.json:/GreenBot/db.json
+      - ../database/db.json:/GreenBot/db.json:rw
     networks:
       - proxy
 
