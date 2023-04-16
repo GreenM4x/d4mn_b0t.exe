@@ -1,15 +1,13 @@
 const {
   SlashCommandBuilder,
-  Client,
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  Events,
 } = require("discord.js");
 const { writeDb } = require("../db/dbFunctions");
 
-var timeout = [];
+const timeout = new Set();
 const CARDS_PER_PAGE = 4;
 const MAX_PAGES = 4;
 const MAX_CARDS = CARDS_PER_PAGE * MAX_PAGES;
@@ -17,31 +15,25 @@ const MAX_CARDS = CARDS_PER_PAGE * MAX_PAGES;
 module.exports = {
   data: new SlashCommandBuilder().setName("draw").setDescription("Draw a card every 15min"),
   async execute(interaction) {
-    if (timeout.includes(interaction.user.id))
+    if (timeout.has(interaction.user.id)) {
       return await interaction.reply({
         content: `You are on a cooldown, try later!`,
         ephemeral: true,
       });
+    }
 
-    var cardName;
-    var cardImg;
-    var cardid;
-    var cardRarity;
+    const data = require("../db/cardInfo.json");
 
-    await fetch("https://db.ygoprodeck.com/api/v7/cardinfo.php")
-      .then((res) => res.json())
-      .then((data) => {
-        cardid = Math.floor(Math.random() * data.data.length);
+    const card = data.data[Math.floor(Math.random() * data.data.length)];
 
-        cardName = data.data[cardid].name;
-        cardType = data.data[cardid].type;
-        cardPrice = data.data[cardid].card_prices[0].cardmarket_price;
-        cardImg = data.data[cardid].card_images[0].image_url;
-        cardRarity =
-          data.data[cardid].card_sets[
-            Math.floor(Math.random() * data.data[cardid].card_sets.length)
-          ].set_rarity;
-      });
+    const cardInfo = {
+      id: card.id,
+      name: card.name,
+      type: card.type,
+      price: card.card_prices[0].cardmarket_price,
+      img: card.card_images[0].image_url,
+      rarity: card.card_sets[Math.floor(Math.random() * card.card_sets.length)].set_rarity,
+    };
 
     const accept = new ButtonBuilder()
       .setCustomId("accept_button_id")
@@ -57,82 +49,60 @@ module.exports = {
 
     const actionRow = new ActionRowBuilder().addComponents(accept, denial);
 
-    const exampleEmbed = new EmbedBuilder()
+    const embed = new EmbedBuilder()
       .setColor(0x95f99f)
-      .setTitle(cardName)
-      .setImage(cardImg)
+      .setTitle(cardInfo.name)
+      .setImage(cardInfo.img)
       .setThumbnail(interaction.user.displayAvatarURL())
       .addFields(
-        { name: "Type", value: cardType, inline: true },
-        { name: "Rarity", value: cardRarity, inline: true },
-        { name: "Price", value: cardPrice, inline: true }
+        { name: "Type", value: cardInfo.type, inline: true },
+        { name: "Rarity", value: cardInfo.rarity, inline: true },
+        { name: "Price", value: cardInfo.price, inline: true }
       )
       .setTimestamp(Date.now());
 
     await interaction.reply({
-      embeds: [exampleEmbed],
+      embeds: [embed],
       components: [actionRow],
     });
 
     const filter = (i) => i.isButton() && i.user.id === interaction.user.id;
     const collector = interaction.channel.createMessageComponentCollector({ filter, time: 15000 });
 
-    // Listen for button clicks
     collector.on("collect", async (i) => {
+      await i.deferUpdate();
+
       if (i.customId === "accept_button_id") {
-        // !!!! TO DO BINDER LIMIT !!!! //
+        const dbdata = require("../db.json");
+        const dbIndex = dbdata.findIndex((x) => x.userId === interaction.user.id);
 
-        var dbdata = require("../db.json");
-
-        dbIndex = dbdata.findIndex((x) => x.userId === interaction.user.id);
-
-        if (dbdata.some((item) => item.userId == i.user.id)) {
+        if (dbIndex === -1) {
+          writeDb({
+            userId: interaction.user.id,
+            userCardId: [cardInfo.id],
+            userCardRarity: [cardInfo.rarity],
+          });
+        } else {
           const userCardArray = dbdata[dbIndex].userCardId;
-          if (userCardArray.length === MAX_CARDS)
-            return await i.reply({
+
+          if (userCardArray.length < MAX_CARDS) {
+            userCardArray.push(cardInfo.id);
+            dbdata[dbIndex].userCardRarity.push(cardInfo.rarity);
+            writeDb(dbdata[dbIndex]);
+          } else {
+            return await i.followUp({
               content: `Your Binder is full, delete a card first with the /delete command.`,
               ephemeral: true,
             });
-        }
-        if (dbdata.some((item) => item.userId == i.user.id)) {
-          var dbIndex = dbdata.findIndex((x) => x.userId === i.user.id);
-
-          //get current CardArrays
-          var CardArray = [];
-          CardArray = dbdata[dbIndex].userCardId;
-          CardArray.push(cardid);
-
-          var RaritydArray = [];
-          RaritydArray = dbdata[dbIndex].userCardRarity;
-          RaritydArray.push(cardRarity);
-
-          const dataObj = {
-            userId: i.user.id,
-            userCardId: CardArray,
-            userCardRarity: RaritydArray,
-          };
-
-          writeDb(dataObj);
-        } else {
-          const dataObj = {
-            userId: i.user.id,
-            userCardId: [cardid],
-            userCardRarity: [cardRarity],
-          };
-
-          writeDb(dataObj);
+          }
         }
 
-        //Output Response
-        await i.deferUpdate();
         await i.editReply({ components: [] });
         await i.followUp({
-          content: "The card was sleaved and carefully put in your Binder!",
+          content: "The card was sleeved and carefully put in your Binder!",
           ephemeral: true,
         });
       } else if (i.customId === "denial_button_id") {
-        //Output Response
-        await i.deferUpdate();
         await i.editReply({ components: [] });
         await i.followUp({
           content: "The Card was burned and floats now in the shadow realm!",
@@ -145,19 +115,20 @@ module.exports = {
       console.log(`Collected ${collected.size} items`);
 
       await interaction.editReply({
-        embeds: [exampleEmbed],
+        embeds: [embed],
         components: [],
       });
-      if (collected.size <= 0)
+      if (collected.size <= 0) {
         await interaction.followUp({
           content: "You waited too long, the card disappeared into the shadow realm!",
           ephemeral: true,
         });
+      }
     });
 
-    timeout.push(interaction.user.id);
+    timeout.add(interaction.user.id);
     setTimeout(() => {
-      timeout.shift();
+      timeout.delete(interaction.user.id);
     }, 900000);
   },
 };
