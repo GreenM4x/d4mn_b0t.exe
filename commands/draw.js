@@ -70,8 +70,6 @@ module.exports = {
     const collector = interaction.channel.createMessageComponentCollector({ filter, time: 15000 });
 
     collector.on("collect", async (i) => {
-      await i.deferUpdate();
-
       if (i.customId === "accept_button_id") {
         const dbdata = require("../db.json");
         const dbIndex = dbdata.findIndex((x) => x.userId === interaction.user.id);
@@ -97,13 +95,13 @@ module.exports = {
           }
         }
 
-        await i.editReply({ components: [] });
+        await i.update({ components: [] });
         await i.followUp({
           content: "The card was sleeved and carefully put in your Binder!",
           ephemeral: true,
         });
       } else if (i.customId === "denial_button_id") {
-        await i.editReply({ components: [] });
+        await i.update({ components: [] });
         await i.followUp({
           content: "The Card was burned and floats now in the shadow realm!",
           ephemeral: true,
