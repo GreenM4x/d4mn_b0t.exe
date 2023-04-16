@@ -1,11 +1,19 @@
 const { SlashCommandBuilder } = require("@discordjs/builders");
-const { ButtonBuilder, ButtonStyle, ActionRowBuilder, EmbedBuilder } = require("discord.js");
+const {
+  ButtonBuilder,
+  ButtonStyle,
+  ActionRowBuilder,
+  EmbedBuilder,
+  AttachmentBuilder,
+} = require("discord.js");
 const { readDb } = require("../db/dbFunctions");
 
 const CARDS_PER_PAGE = 4;
 const BINDER_TIMEOUT = 60000;
 const COMMAND_COOLDOWN = 16000;
 const timeout = new Set();
+
+const cardInfo = require("../db/cardInfo.json");
 
 module.exports = {
   data: new SlashCommandBuilder().setName("binder").setDescription("Show the cards you collected"),
@@ -31,19 +39,16 @@ module.exports = {
     const userName = interaction.user.username;
     const userAvatar = interaction.user.displayAvatarURL();
 
-    const cardData = await fetch("https://db.ygoprodeck.com/api/v7/cardinfo.php")
-      .then((res) => res.json())
-      .then((data) =>
-        userCardId.map((cardId) => {
-          const card = data.data[cardId];
-          return {
-            name: card.name,
-            price: card.card_prices[0].cardmarket_price,
-            img: card.card_images[0].image_url,
-            rarity: userCardRarity[userCardId.indexOf(cardId)],
-          };
-        })
-      );
+    const cardData = userCardId.map((cardId) => {
+      const card = cardInfo.data.find((card) => card.id === cardId);
+      const price = card.card_prices[0].cardmarket_price;
+      return {
+        id: cardId,
+        name: card.name,
+        price: price,
+        rarity: userCardRarity[userCardId.indexOf(cardId)],
+      };
+    });
 
     const leftPage = new ButtonBuilder()
       .setCustomId("leftPage_button_id")
@@ -69,13 +74,19 @@ module.exports = {
         .setTimestamp(Date.now())
         .setURL("https://example.org/");
       const imageEmbeds = [];
+      const attachments = [];
       cardsOnPage.forEach((card, index) => {
         embed.addFields(
           { name: `[${startIndex + index + 1}] Name`, value: card.name, inline: true },
           { name: "Rarity", value: card.rarity, inline: true },
           { name: "Price", value: card.price, inline: true }
         );
-        imageEmbeds.push(new EmbedBuilder().setImage(card.img).setURL("https://example.org/"));
+        attachments.push(
+          new AttachmentBuilder(`./db/images/${card.id}.jpg`, { name: `${card.id}.jpg` })
+        );
+        imageEmbeds.push(
+          new EmbedBuilder().setImage(`attachment://${card.id}.jpg`).setURL("https://example.org/")
+        );
       });
 
       const embeds = [embed, ...imageEmbeds];
@@ -88,8 +99,10 @@ module.exports = {
       if (currentPage < totalPages) {
         actionRow.addComponents(rightPage);
       }
-
-      return { embeds, components: [actionRow] };
+      if (!actionRow.components.length) {
+        return { embeds, files: attachments };
+      }
+      return { embeds, components: [actionRow], files: attachments };
     }
 
     await interaction.reply(await binderBuilder());

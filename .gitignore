@@ -1,5 +1,5 @@
 .env
 node_modules
 db.json
-db/images/*
+db/images
 db/cardInfo.json
