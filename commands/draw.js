@@ -10,6 +10,9 @@ const {
 const { writeDb } = require("../db/dbFunctions");
 
 var timeout = [];
+const CARDS_PER_PAGE = 4;
+const MAX_PAGES = 4;
+const MAX_CARDS = CARDS_PER_PAGE * MAX_PAGES;
 
 module.exports = {
   data: new SlashCommandBuilder().setName("draw").setDescription("Draw a card every 15min"),
@@ -85,7 +88,7 @@ module.exports = {
 
         if (dbdata.some((item) => item.userId == i.user.id)) {
           const userCardArray = dbdata[dbIndex].userCardId;
-          if (userCardArray.length == 8)
+          if (userCardArray.length === MAX_CARDS)
             return await i.reply({
               content: `Your Binder is full, delete a card first with the /delete command.`,
               ephemeral: true,

@@ -1,61 +1,49 @@
-const {
-  SlashCommandBuilder,
-  Client,
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  Events,
-} = require("discord.js");
+const { SlashCommandBuilder } = require("@discordjs/builders");
+const { ButtonBuilder, ButtonStyle, ActionRowBuilder, EmbedBuilder } = require("discord.js");
 const { readDb } = require("../db/dbFunctions");
 
-var timeout = [];
+const CARDS_PER_PAGE = 4;
+const BINDER_TIMEOUT = 60000;
+const COMMAND_COOLDOWN = 16000;
+const timeout = new Set();
 
 module.exports = {
   data: new SlashCommandBuilder().setName("binder").setDescription("Show the cards you collected"),
   async execute(interaction) {
-    var binder = readDb();
-    var dbIndex;
-
-    dbIndex = binder.findIndex((x) => x.userId === interaction.user.id);
-    if (dbIndex < 0)
+    if (timeout.has(interaction.user.id)) {
       return await interaction.reply({
-        content: `You don't have any cards. Try the /draw command first`,
+        content: "You are on a cooldown, try again later",
         ephemeral: true,
       });
+    }
 
-    if (timeout.includes(interaction.user.id))
+    const binder = readDb();
+    const dbIndex = binder.findIndex((x) => x.userId === interaction.user.id);
+
+    if (dbIndex < 0) {
       return await interaction.reply({
-        content: `You are on a cooldown, try again later`,
+        content: "You don't have any cards. Try the /draw command first",
         ephemeral: true,
       });
-    var userName = interaction.user.username;
-    var userAvatar = interaction.user.displayAvatarURL();
+    }
 
-    var pageChanged = false;
+    const { userCardId, userCardRarity } = binder[dbIndex];
+    const userName = interaction.user.username;
+    const userAvatar = interaction.user.displayAvatarURL();
 
-    const userCardArray = binder[dbIndex].userCardId;
-
-    var userCardRarityArray = binder[dbIndex].userCardRarity;
-
-    var userCardNameArray = [];
-    var userCardPriceArray = [];
-    var userCardImgArray = [];
-
-    await fetch("https://db.ygoprodeck.com/api/v7/cardinfo.php")
+    const cardData = await fetch("https://db.ygoprodeck.com/api/v7/cardinfo.php")
       .then((res) => res.json())
-      .then((data) => {
-        userCardArray.forEach((cardid) => {
-          var cardName = data.data[cardid].name;
-          userCardNameArray.push(cardName);
-
-          var cardPrice = data.data[cardid].card_prices[0].cardmarket_price;
-          userCardPriceArray.push(cardPrice);
-
-          var cardImg = data.data[cardid].card_images[0].image_url;
-          userCardImgArray.push(cardImg);
-        });
-      });
+      .then((data) =>
+        userCardId.map((cardId) => {
+          const card = data.data[cardId];
+          return {
+            name: card.name,
+            price: card.card_prices[0].cardmarket_price,
+            img: card.card_images[0].image_url,
+            rarity: userCardRarity[userCardId.indexOf(cardId)],
+          };
+        })
+      );
 
     const leftPage = new ButtonBuilder()
       .setCustomId("leftPage_button_id")
@@ -67,368 +55,69 @@ module.exports = {
       .setStyle(ButtonStyle.Secondary)
       .setEmoji("▶️");
 
-    const actionRowLeft = new ActionRowBuilder().addComponents(leftPage);
-    const actionRowRight = new ActionRowBuilder().addComponents(rightPage);
+    let currentPage = 1;
 
-    var arraySize = userCardArray.length;
-    var onPage = 1;
-    var arrayIndex = 0;
+    async function binderBuilder() {
+      const totalPages = Math.ceil(cardData.length / CARDS_PER_PAGE);
+      const startIndex = (currentPage - 1) * CARDS_PER_PAGE;
+      const endIndex = startIndex + CARDS_PER_PAGE;
+      const cardsOnPage = cardData.slice(startIndex, endIndex);
 
-    var embedNumer;
+      const embed = new EmbedBuilder()
+        .setTitle(`${userName}'s Binder \t Page [ ${currentPage} ]`)
+        .setThumbnail(userAvatar)
+        .setTimestamp(Date.now())
+        .setURL("https://example.org/");
+      const imageEmbeds = [];
+      cardsOnPage.forEach((card, index) => {
+        embed.addFields(
+          { name: `[${startIndex + index + 1}] Name`, value: card.name, inline: true },
+          { name: "Rarity", value: card.rarity, inline: true },
+          { name: "Price", value: card.price, inline: true }
+        );
+        imageEmbeds.push(new EmbedBuilder().setImage(card.img).setURL("https://example.org/"));
+      });
 
-    await binderBuilder();
+      const embeds = [embed, ...imageEmbeds];
 
-    async function binderBuilder(i) {
-      if (arraySize > 4) {
-        if (onPage == 1) {
-          embedNumer = 4;
-          arrayIndex = 0;
-        } else if (onPage == 2) {
-          embedNumer = arraySize - 4;
-          arrayIndex = 4;
-        }
-      } else {
-        embedNumer = arraySize;
+      const actionRow = new ActionRowBuilder();
+      if (currentPage > 1) {
+        actionRow.addComponents(leftPage);
       }
 
-      switch (embedNumer) {
-        case 1:
-          const binder1 = new EmbedBuilder()
-            .setImage(userCardImgArray[arrayIndex])
-            .setTitle(userName + `'s Binder \t Page [ ` + onPage + ` ]`)
-            .setThumbnail(userAvatar)
-            .addFields(
-              {
-                name: "[" + (arrayIndex + 1).toString() + "]   Name",
-                value: userCardNameArray[arrayIndex],
-                inline: true,
-              },
-              {
-                name: "Rarity",
-                value: userCardRarityArray[arrayIndex],
-                inline: true,
-              },
-              {
-                name: "Price",
-                value: userCardPriceArray[arrayIndex],
-                inline: true,
-              }
-            )
-            .setTimestamp(Date.now());
-
-          if (arraySize <= 4) {
-            await interaction.reply({
-              embeds: [binder1],
-            });
-          } else if (onPage == 1 && pageChanged == false) {
-            await interaction.reply({
-              embeds: [binder1],
-              components: [actionRowRight],
-            });
-          } else if (onPage == 2) {
-            await i.editReply({
-              embeds: [binder1],
-              components: [actionRowLeft],
-            });
-          } else if (onPage == 1 && pageChanged == true) {
-            await i.editReply({
-              embeds: [binder1],
-              components: [actionRowRight],
-            });
-          }
-
-          break;
-        case 2:
-          var embeds = [
-            new EmbedBuilder()
-              .setURL("https://example.org/")
-              .setImage(userCardImgArray[arrayIndex])
-              .setTitle(userName + `'s Binder \t Page [ ` + onPage + ` ]`)
-              .setThumbnail(userAvatar)
-              .addFields(
-                {
-                  name: "[" + (arrayIndex + 1).toString() + "]   Name",
-                  value: userCardNameArray[arrayIndex],
-                  inline: true,
-                },
-                {
-                  name: "Rarity",
-                  value: userCardRarityArray[arrayIndex],
-                  inline: true,
-                },
-                {
-                  name: "Price",
-                  value: userCardPriceArray[arrayIndex],
-                  inline: true,
-                },
-
-                {
-                  name: "[" + (arrayIndex + 2).toString() + "]   Name",
-                  value: userCardNameArray[arrayIndex + 1],
-                  inline: true,
-                },
-                {
-                  name: "Rarity",
-                  value: userCardRarityArray[arrayIndex + 1],
-                  inline: true,
-                },
-                {
-                  name: "Price",
-                  value: userCardPriceArray[arrayIndex + 1],
-                  inline: true,
-                }
-              )
-              .setTimestamp(Date.now()),
-
-            new EmbedBuilder()
-              .setURL("https://example.org/")
-              .setImage(userCardImgArray[arrayIndex + 1]),
-          ];
-
-          if (arraySize <= 4) {
-            await interaction.reply({
-              embeds,
-            });
-          } else if (onPage == 1 && pageChanged == false) {
-            await interaction.reply({
-              embeds,
-              components: [actionRowRight],
-            });
-          } else if (onPage == 2) {
-            await i.editReply({ embeds, components: [actionRowLeft] });
-          } else if (onPage == 1 && pageChanged == true) {
-            await i.editReply({ embeds, components: [actionRowRight] });
-          }
-
-          break;
-        case 3:
-          var embeds = [
-            new EmbedBuilder()
-              .setURL("https://example.org/")
-              .setImage(userCardImgArray[arrayIndex])
-              .setTitle(userName + `'s Binder \t Page [ ` + onPage + ` ]`)
-              .setThumbnail(userAvatar)
-              .addFields(
-                {
-                  name: "[" + (arrayIndex + 1).toString() + "]   Name",
-                  value: userCardNameArray[arrayIndex],
-                  inline: true,
-                },
-                {
-                  name: "Rarity",
-                  value: userCardRarityArray[arrayIndex],
-                  inline: true,
-                },
-                {
-                  name: "Price",
-                  value: userCardPriceArray[arrayIndex],
-                  inline: true,
-                },
-
-                {
-                  name: "[" + (arrayIndex + 2).toString() + "]   Name",
-                  value: userCardNameArray[arrayIndex + 1],
-                  inline: true,
-                },
-                {
-                  name: "Rarity",
-                  value: userCardRarityArray[arrayIndex + 1],
-                  inline: true,
-                },
-                {
-                  name: "Price",
-                  value: userCardPriceArray[arrayIndex + 1],
-                  inline: true,
-                },
-
-                {
-                  name: "[" + (arrayIndex + 3).toString() + "]   Name",
-                  value: userCardNameArray[arrayIndex + 2],
-                  inline: true,
-                },
-                {
-                  name: "Rarity",
-                  value: userCardRarityArray[arrayIndex + 2],
-                  inline: true,
-                },
-                {
-                  name: "Price",
-                  value: userCardPriceArray[arrayIndex + 2],
-                  inline: true,
-                }
-              )
-              .setTimestamp(Date.now()),
-
-            new EmbedBuilder()
-              .setURL("https://example.org/")
-              .setImage(userCardImgArray[arrayIndex + 1]),
-            new EmbedBuilder()
-              .setURL("https://example.org/")
-              .setImage(userCardImgArray[arrayIndex + 2]),
-          ];
-
-          if (arraySize <= 4) {
-            await interaction.reply({
-              embeds,
-            });
-          } else if (onPage == 1 && pageChanged == false) {
-            await interaction.reply({
-              embeds,
-              components: [actionRowRight],
-            });
-          } else if (onPage == 2) {
-            await i.editReply({ embeds, components: [actionRowLeft] });
-          } else if (onPage == 1 && pageChanged == true) {
-            await i.editReply({ embeds, components: [actionRowRight] });
-          }
-
-          break;
-        case 4:
-          var embeds = [
-            new EmbedBuilder()
-              .setURL("https://example.org/")
-              .setImage(userCardImgArray[arrayIndex])
-              .setTitle(userName + `'s Binder \t Page [ ` + onPage + ` ]`)
-              .setThumbnail(userAvatar)
-              .addFields(
-                {
-                  name: "[" + (arrayIndex + 1).toString() + "]   Name",
-                  value: userCardNameArray[arrayIndex],
-                  inline: true,
-                },
-                {
-                  name: "Rarity",
-                  value: userCardRarityArray[arrayIndex],
-                  inline: true,
-                },
-                {
-                  name: "Price",
-                  value: userCardPriceArray[arrayIndex],
-                  inline: true,
-                },
-
-                {
-                  name: "[" + (arrayIndex + 2).toString() + "]   Name",
-                  value: userCardNameArray[arrayIndex + 1],
-                  inline: true,
-                },
-                {
-                  name: "Rarity",
-                  value: userCardRarityArray[arrayIndex + 1],
-                  inline: true,
-                },
-                {
-                  name: "Price",
-                  value: userCardPriceArray[arrayIndex + 1],
-                  inline: true,
-                },
-
-                {
-                  name: "[" + (arrayIndex + 3).toString() + "]   Name",
-                  value: userCardNameArray[arrayIndex + 2],
-                  inline: true,
-                },
-                {
-                  name: "Rarity",
-                  value: userCardRarityArray[arrayIndex + 2],
-                  inline: true,
-                },
-                {
-                  name: "Price",
-                  value: userCardPriceArray[arrayIndex + 2],
-                  inline: true,
-                },
-
-                {
-                  name: "[" + (arrayIndex + 4).toString() + "]   Name",
-                  value: userCardNameArray[arrayIndex + 3],
-                  inline: true,
-                },
-                {
-                  name: "Rarity",
-                  value: userCardRarityArray[arrayIndex + 3],
-                  inline: true,
-                },
-                {
-                  name: "Price",
-                  value: userCardPriceArray[arrayIndex + 3],
-                  inline: true,
-                }
-              )
-              .setTimestamp(Date.now()),
-
-            new EmbedBuilder()
-              .setURL("https://example.org/")
-              .setImage(userCardImgArray[arrayIndex + 1]),
-            new EmbedBuilder()
-              .setURL("https://example.org/")
-              .setImage(userCardImgArray[arrayIndex + 2]),
-            new EmbedBuilder()
-              .setURL("https://example.org/")
-              .setImage(userCardImgArray[arrayIndex + 3]),
-          ];
-
-          if (arraySize <= 4) {
-            await interaction.reply({
-              embeds,
-            });
-          } else if (onPage == 1 && pageChanged == false) {
-            await interaction.reply({
-              embeds,
-              components: [actionRowRight],
-            });
-          } else if (onPage == 2) {
-            await i.editReply({ embeds, components: [actionRowLeft] });
-          } else if (onPage == 1 && pageChanged == true) {
-            await i.editReply({ embeds, components: [actionRowRight] });
-          }
-
-          break;
-
-        default:
-          await interaction.reply({
-            content: "You have no Cards in Your Binder",
-            ephemeral: true,
-          });
-          break;
+      if (currentPage < totalPages) {
+        actionRow.addComponents(rightPage);
       }
+
+      return { embeds, components: [actionRow] };
     }
+
+    await interaction.reply(await binderBuilder());
 
     const filter = (i) => i.isButton() && i.user.id === interaction.user.id;
     const collector = interaction.channel.createMessageComponentCollector({
       filter,
-      time: 15000,
+      time: BINDER_TIMEOUT,
     });
 
-    // Listen for button clicks
     collector.on("collect", async (i) => {
+      await i.deferUpdate();
       if (i.customId === "leftPage_button_id") {
-        pageChanged = true;
-        onPage = 1;
-        await i.deferUpdate();
-        await binderBuilder(i);
+        currentPage--;
       } else if (i.customId === "rightPage_button_id") {
-        onPage = 2;
-        await i.deferUpdate();
-        await binderBuilder(i);
+        currentPage++;
       }
+
+      await interaction.editReply(await binderBuilder());
     });
 
-    collector.on("end", async (collected) => {
-      await interaction.editReply({
-        components: [],
+    collector.on("end", async () => {
+      timeout.add(interaction.user.id);
+      await interaction.followUp({
+        content: "Binder closed after a while the energy needed to keep it open was too big",
+        ephemeral: true,
       });
-      if (arraySize > 4) {
-        await interaction.followUp({
-          content: "Binder closed after a while the energy needed to keep it open was too big",
-          ephemeral: true,
-        });
-      }
+      setTimeout(() => timeout.delete(interaction.user.id), COMMAND_COOLDOWN);
     });
-
-    timeout.push(interaction.user.id);
-    setTimeout(() => {
-      timeout.shift();
-    }, 16000);
   },
 };
