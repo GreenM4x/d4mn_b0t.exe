@@ -4,6 +4,7 @@ const {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  AttachmentBuilder,
 } = require("discord.js");
 const { writeDb } = require("../db/dbFunctions");
 
@@ -52,7 +53,7 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setColor(getColorForCardType(cardInfo.type))
       .setTitle(cardInfo.name)
-      .setImage(cardInfo.img)
+      .setImage(`attachment://${cardInfo.id}.jpg`)
       .setThumbnail(interaction.user.displayAvatarURL())
       .addFields(
         { name: "Type", value: cardInfo.type, inline: true },
@@ -64,6 +65,9 @@ module.exports = {
     await interaction.reply({
       embeds: [embed],
       components: [actionRow],
+      files: [
+        new AttachmentBuilder(`./db/images/${cardInfo.id}.jpg`, { name: `${cardInfo.id}.jpg` }),
+      ],
     });
 
     const filter = (i) => i.isButton() && i.user.id === interaction.user.id;
