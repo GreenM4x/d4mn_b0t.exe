@@ -1,15 +1,15 @@
 const cardInfo = require("../db/cardInfo.json");
 
-const getCardData = (cardId, binder) => {
-  const card = cardInfo.data.find((card) => card.id === cardId);
-  const rarity = binder.userCardRarity[binder.userCardId.indexOf(cardId)];
-  const price = card.card_prices[0].cardmarket_price;
-  const img = `attachment://${card.id}.jpg`;
+const getCardData = (binderCard) => {
+  const cardDetails = cardInfo.data.find((card) => card.id === binderCard.id);
+  const rarity = binderCard.rarity;
+  const price = cardDetails.card_prices[0].cardmarket_price;
+  const img = `attachment://${binderCard.id}.jpg`;
 
   return {
-    id: card.id,
-    name: card.name,
-    type: card.type,
+    id: cardDetails.id,
+    name: cardDetails.name,
+    type: cardDetails.type,
     price: price,
     img: img,
     rarity: rarity,

@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require("discord.js");
-const { readDb } = require("../db/dbFunctions");
+const { readDb, getUserData } = require("../db/dbFunctions");
 const fs = require("fs");
 const { MAX_PAGES, CARDS_PER_PAGE } = require("../shared/variables");
 
@@ -16,42 +16,28 @@ module.exports = {
         .setRequired(true)
     ),
   async execute(interaction) {
-    var binder = readDb();
-    var dbIndex;
+    const allData = readDb();
+    const binder = allData.find((data) => data.userId === interaction.user.id);
 
-    dbIndex = binder.findIndex((x) => x.userId === interaction.user.id);
-    if (dbIndex < 0)
+    if (!binder)
       return await interaction.reply({
         content: `You don't have any cards. Try the /draw command first`,
         ephemeral: true,
       });
 
-    const cardDelId = interaction.options.getString("id");
-    if (cardDelId <= 0 || cardDelId > MAX_CARDS || isNaN(cardDelId))
+    const cardDelIndex = interaction.options.getString("id");
+    if (cardDelIndex <= 0 || cardDelIndex > MAX_CARDS || isNaN(cardDelIndex))
       return await interaction.reply({
         content: "Please enter a valid Id",
         ephemeral: true,
       });
 
-    var userCardArray = binder[dbIndex].userCardId;
+    let userCards = binder.cards;
+    userCards.splice(cardDelIndex - 1, 1);
+    binder.cards = userCards;
+    allData[allData.findIndex((data) => data.userId === interaction.user.id)] = binder;
 
-    var userCardRarityArray = binder[dbIndex].userCardRarity;
-
-    console.log(userCardArray[cardDelId - 1] + "   " + userCardRarityArray[cardDelId - 1]);
-
-    var index = binder[dbIndex].userCardId.indexOf(userCardArray[cardDelId - 1]);
-    if (index !== -1) {
-      binder[dbIndex].userCardId.splice(index, 1);
-    }
-
-    var index2 = binder[dbIndex].userCardRarity.indexOf(userCardRarityArray[cardDelId - 1]);
-    if (index2 !== -1) {
-      binder[dbIndex].userCardRarity.splice(index, 1);
-    }
-
-    console.log(binder);
-
-    fs.writeFile("db.json", JSON.stringify(binder), (err) => {
+    fs.writeFile("db.json", JSON.stringify(allData), (err) => {
       if (err) {
         console.error(err);
         return;

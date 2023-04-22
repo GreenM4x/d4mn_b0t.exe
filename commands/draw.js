@@ -79,15 +79,16 @@ module.exports = {
         if (!binder) {
           writeDb({
             userId: interaction.user.id,
-            userCardId: [card.id],
-            userCardRarity: [card.rarity],
+            cards: [{ id: card.id, rarity: card.rarity }],
           });
         } else {
-          const userCardArray = binder.userCardId;
+          const userCards = binder.cards;
 
-          if (userCardArray.length < MAX_CARDS) {
-            userCardArray.push(card.id);
-            binder.userCardRarity.push(card.rarity);
+          if (userCards.length < MAX_CARDS) {
+            userCards.push({
+              id: card.id,
+              rarity: card.rarity,
+            });
             writeDb(binder);
           } else {
             return await i.followUp({

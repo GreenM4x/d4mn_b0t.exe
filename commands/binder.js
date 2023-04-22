@@ -39,7 +39,7 @@ module.exports = {
         ephemeral: true,
       });
     }
-    const cardData = binder.userCardId.map((cardId) => getCardData(cardId, binder));
+    const cardData = binder.cards.map((card) => getCardData(card));
 
     const leftPage = new ButtonBuilder()
       .setCustomId("leftPage_button_id")

@@ -15,7 +15,7 @@ function writeDb(obj, dbName = "db.json") {
   if (!obj) return console.log("Please provide data to save");
   try {
     var data = require("../db.json");
-    if (data.some((item) => item.userId == obj.userId)) {
+    if (data.some((item) => item.userId === obj.userId)) {
       data[data.findIndex((x) => x.userId === obj.userId)] = obj;
     } else {
       data.push(obj);
