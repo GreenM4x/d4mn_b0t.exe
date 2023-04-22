@@ -40,8 +40,9 @@ module.exports = {
 
     const cardIndex = interaction.options.getInteger("card_index");
     const recipient = interaction.options.getUser("recipient");
+    const recipientId = recipient.id;
 
-    if (interaction.user.id === recipient.id) {
+    if (interaction.user.id === recipientId) {
       return await interaction.reply({
         content: "What do you think you're doing?",
         ephemeral: true,
@@ -97,7 +98,7 @@ module.exports = {
     });
 
     await interaction.reply({
-      content: `<@${recipient.id}>, someone is gifting you a card!`,
+      content: `<@${recipientId}>, someone is gifting you a card!`,
       embeds: [embed],
       components: [actionRow],
       files: [
@@ -111,7 +112,7 @@ module.exports = {
     });
 
     collector.on("collect", async (i) => {
-      if (i.user.id !== recipient.id) {
+      if (i.user.id !== recipientId) {
         await i.reply({ content: "Wooow buddy, this is not your gift!", ephemeral: true });
         return;
       }
@@ -120,23 +121,23 @@ module.exports = {
         senderBinder.cards.splice(cardIndex - 1, 1);
         writeDb(senderBinder);
 
-        const recipientBinder = getUserData(recipient.id) || { userId: recipient.id, cards: [] };
+        const recipientBinder = getUserData(recipientId) || { userId: recipientId, cards: [] };
         recipientBinder.cards.push(cardToGift);
         writeDb(recipientBinder);
 
         await i.update({
-          content: `Congratulations, <@${recipient.id}>! You received the card!`,
+          content: `Congratulations, <@${recipientId}>! You received the card!`,
           components: [],
         });
       } else if (i.customId === "decline_gift_button_id") {
-        await i.update({ content: `<@${recipient.id}> just declined a gift. LOL`, components: [] });
+        await i.update({ content: `<@${recipientId}> just declined a gift. LOL`, components: [] });
       }
     });
 
     collector.on("end", async (collected) => {
       if (collected.size === 0) {
         await interaction.editReply({
-          content: `The gift offer has expired. Sucks for you, <@${recipient.id}>!`,
+          content: `The gift offer has expired. Sucks for you, <@${recipientId}>!`,
           components: [],
         });
       }
