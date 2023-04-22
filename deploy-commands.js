@@ -1,6 +1,7 @@
 const { REST, Routes } = require("discord.js");
 const fs = require("node:fs");
 const path = require("node:path");
+require("dotenv").config();
 
 const commands = [];
 // Grab all the command files from the commands directory you created earlier
@@ -14,7 +15,7 @@ for (const file of commandFiles) {
 }
 
 // Construct and prepare an instance of the REST module
-const rest = new REST({ version: "10" }).setToken(process.env.GITHUB_TOKEN);
+const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
 
 // and deploy your commands!
 (async () => {
