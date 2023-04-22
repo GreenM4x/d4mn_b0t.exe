@@ -107,6 +107,7 @@ module.exports = {
 
     const collector = interaction.channel.createMessageComponentCollector({
       time: GIFT_TIMEOUT,
+      maxButtons: 2,
     });
 
     collector.on("collect", async (i) => {
