@@ -12,6 +12,7 @@ const { getCardData } = require("../shared/card");
 const cooldownManager = require("../shared/cooldownManager");
 
 const COMMAND_NAME = "binder";
+const SOME_RANDOM_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -52,7 +53,7 @@ module.exports = {
       .setEmoji("▶️");
 
     let currentPage = 1;
-
+    let actionRow;
     async function binderBuilder() {
       const totalPages = Math.ceil(cardData.length / CARDS_PER_PAGE);
       const startIndex = (currentPage - 1) * CARDS_PER_PAGE;
@@ -63,7 +64,7 @@ module.exports = {
         .setTitle(`${userName}'s Binder \t Page ${currentPage} / ${totalPages}`)
         .setThumbnail(userAvatar)
         .setTimestamp(Date.now())
-        .setURL("https://example.org/");
+        .setURL(SOME_RANDOM_URL);
       const imageEmbeds = [];
       const attachments = [];
       cardsOnPage.forEach((card, index) => {
@@ -76,13 +77,13 @@ module.exports = {
           new AttachmentBuilder(`./db/images/${card.id}.jpg`, { name: `${card.id}.jpg` })
         );
         imageEmbeds.push(
-          new EmbedBuilder().setImage(`attachment://${card.id}.jpg`).setURL("https://example.org/")
+          new EmbedBuilder().setImage(`attachment://${card.id}.jpg`).setURL(SOME_RANDOM_URL)
         );
       });
 
       const embeds = [embed, ...imageEmbeds];
 
-      const actionRow = new ActionRowBuilder();
+      actionRow = new ActionRowBuilder();
       if (currentPage > 1) {
         actionRow.addComponents(leftPage);
       }
@@ -116,6 +117,10 @@ module.exports = {
     });
 
     collector.on("end", async () => {
+      actionRow?.components?.forEach((component) => {
+        component.setDisabled(true);
+      });
+      await interaction.editReply({ components: [actionRow] });
       await interaction.followUp({
         content: "Binder closed after a while the energy needed to keep it open was too big",
         ephemeral: true,

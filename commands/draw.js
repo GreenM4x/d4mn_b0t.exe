@@ -114,8 +114,6 @@ module.exports = {
     });
 
     collector.on("end", async (collected) => {
-      console.log(`Collected ${collected.size} items`);
-
       await interaction.editReply({
         embeds: [embed],
         components: [],
