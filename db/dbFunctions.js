@@ -6,6 +6,11 @@ function readDb(dbName = "db.json") {
   return JSON.parse(data);
 }
 
+function getUserData(userId, dbName = "db.json") {
+  const data = readDb(dbName);
+  return data.find((item) => item.userId == userId);
+}
+
 function writeDb(obj, dbName = "db.json") {
   if (!obj) return console.log("Please provide data to save");
   try {
@@ -22,4 +27,4 @@ function writeDb(obj, dbName = "db.json") {
   }
 }
 
-module.exports = { readDb, writeDb };
+module.exports = { readDb, writeDb, getUserData };

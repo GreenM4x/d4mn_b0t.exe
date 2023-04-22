@@ -6,49 +6,40 @@ const {
   EmbedBuilder,
   AttachmentBuilder,
 } = require("discord.js");
-const { readDb } = require("../db/dbFunctions");
+const { getUserData } = require("../db/dbFunctions");
+const { CARDS_PER_PAGE, BINDER_TIMEOUT, BINDER_COMMAND_COOLDOWN } = require("../shared/variables");
+const { getCardData } = require("../shared/card");
+const cooldownManager = require("../shared/cooldownManager");
 
-const CARDS_PER_PAGE = 4;
-const BINDER_TIMEOUT = 60000;
-const COMMAND_COOLDOWN = 16000;
-const timeout = new Set();
-
-const cardInfo = require("../db/cardInfo.json");
+const COMMAND_NAME = "binder";
 
 module.exports = {
-  data: new SlashCommandBuilder().setName("binder").setDescription("Show the cards you collected"),
+  data: new SlashCommandBuilder()
+    .setName(COMMAND_NAME)
+    .setDescription("Show the cards you collected"),
   async execute(interaction) {
-    if (timeout.has(interaction.user.id)) {
+    if (cooldownManager.check(interaction.user.id, COMMAND_NAME)) {
       return await interaction.reply({
-        content: "You are on a cooldown, try again later",
+        content: `You are on a cooldown. ${cooldownManager.remainingCooldown(
+          interaction.user.id,
+          COMMAND_NAME
+        )} remaining`,
         ephemeral: true,
       });
     }
+    cooldownManager.add(interaction.user.id, COMMAND_NAME, BINDER_COMMAND_COOLDOWN);
 
-    const binder = readDb();
-    const dbIndex = binder.findIndex((x) => x.userId === interaction.user.id);
+    const binder = await getUserData(interaction.user.id);
+    const userName = interaction.user.username;
+    const userAvatar = interaction.user.displayAvatarURL();
 
-    if (dbIndex < 0) {
+    if (!binder) {
       return await interaction.reply({
         content: "You don't have any cards. Try the /draw command first",
         ephemeral: true,
       });
     }
-
-    const { userCardId, userCardRarity } = binder[dbIndex];
-    const userName = interaction.user.username;
-    const userAvatar = interaction.user.displayAvatarURL();
-
-    const cardData = userCardId.map((cardId) => {
-      const card = cardInfo.data.find((card) => card.id === cardId);
-      const price = card.card_prices[0].cardmarket_price;
-      return {
-        id: cardId,
-        name: card.name,
-        price: price,
-        rarity: userCardRarity[userCardId.indexOf(cardId)],
-      };
-    });
+    const cardData = binder.userCardId.map((cardId) => getCardData(cardId, binder));
 
     const leftPage = new ButtonBuilder()
       .setCustomId("leftPage_button_id")
@@ -69,7 +60,7 @@ module.exports = {
       const cardsOnPage = cardData.slice(startIndex, endIndex);
 
       const embed = new EmbedBuilder()
-        .setTitle(`${userName}'s Binder \t Page [ ${currentPage} ]`)
+        .setTitle(`${userName}'s Binder \t Page ${currentPage} / ${totalPages}`)
         .setThumbnail(userAvatar)
         .setTimestamp(Date.now())
         .setURL("https://example.org/");
@@ -125,12 +116,10 @@ module.exports = {
     });
 
     collector.on("end", async () => {
-      timeout.add(interaction.user.id);
       await interaction.followUp({
         content: "Binder closed after a while the energy needed to keep it open was too big",
         ephemeral: true,
       });
-      setTimeout(() => timeout.delete(interaction.user.id), COMMAND_COOLDOWN);
     });
   },
 };

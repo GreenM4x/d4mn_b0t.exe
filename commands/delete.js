@@ -1,6 +1,9 @@
 const { SlashCommandBuilder } = require("discord.js");
 const { readDb } = require("../db/dbFunctions");
 const fs = require("fs");
+const { MAX_PAGES, CARDS_PER_PAGE } = require("../shared/variables");
+
+const MAX_CARDS = CARDS_PER_PAGE * MAX_PAGES;
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -24,7 +27,7 @@ module.exports = {
       });
 
     const cardDelId = interaction.options.getString("id");
-    if (cardDelId <= 0 || cardDelId > 8 || isNaN(cardDelId))
+    if (cardDelId <= 0 || cardDelId > MAX_CARDS || isNaN(cardDelId))
       return await interaction.reply({
         content: "Please enter a valid Id",
         ephemeral: true,
