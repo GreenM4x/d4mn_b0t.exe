@@ -7,15 +7,9 @@ const {
 } = require("discord.js");
 const { writeDb, getUserData } = require("../db/dbFunctions");
 const { getColorForCardType, getRandomCard } = require("../shared/card");
-const {
-  CARDS_PER_PAGE,
-  MAX_PAGES,
-  DRAW_COMMAND_COOLDOWN,
-  DRAW_TIMEOUT,
-} = require("../shared/variables");
+const { DRAW_COMMAND_COOLDOWN, DRAW_TIMEOUT } = require("../shared/variables");
 const cooldownManager = require("../shared/cooldownManager");
 const { createEmbed } = require("../shared/utils");
-const MAX_CARDS = CARDS_PER_PAGE * MAX_PAGES;
 
 const COMMAND_NAME = "draw";
 module.exports = {
@@ -83,19 +77,11 @@ module.exports = {
           });
         } else {
           const userCards = binder.cards;
-
-          if (userCards.length < MAX_CARDS) {
-            userCards.push({
-              id: card.id,
-              rarity: card.rarity,
-            });
-            writeDb(binder);
-          } else {
-            return await i.followUp({
-              content: `Your Binder is full, delete a card first with the /delete command.`,
-              ephemeral: true,
-            });
-          }
+          userCards.push({
+            id: card.id,
+            rarity: card.rarity,
+          });
+          writeDb(binder);
         }
         embed.setColor(0x00ff00); // Green color
         await i.update({ embeds: [embed], components: [] });

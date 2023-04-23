@@ -1,9 +1,6 @@
 const { SlashCommandBuilder } = require("discord.js");
-const { readDb, getUserData } = require("../db/dbFunctions");
+const { readDb } = require("../db/dbFunctions");
 const fs = require("fs");
-const { MAX_PAGES, CARDS_PER_PAGE } = require("../shared/variables");
-
-const MAX_CARDS = CARDS_PER_PAGE * MAX_PAGES;
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -26,13 +23,15 @@ module.exports = {
       });
 
     const cardDelIndex = interaction.options.getString("id");
-    if (cardDelIndex <= 0 || cardDelIndex > MAX_CARDS || isNaN(cardDelIndex))
+
+    let userCards = binder.cards;
+    if (cardDelIndex <= 0 || cardDelIndex > userCards.length || isNaN(cardDelIndex)) {
       return await interaction.reply({
         content: "Please enter a valid Id",
         ephemeral: true,
       });
+    }
 
-    let userCards = binder.cards;
     userCards.splice(cardDelIndex - 1, 1);
     binder.cards = userCards;
     allData[allData.findIndex((data) => data.userId === interaction.user.id)] = binder;

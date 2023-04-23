@@ -10,6 +10,7 @@ const { getUserData } = require("../db/dbFunctions");
 const { CARDS_PER_PAGE, BINDER_TIMEOUT, BINDER_COMMAND_COOLDOWN } = require("../shared/variables");
 const { getCardData } = require("../shared/card");
 const cooldownManager = require("../shared/cooldownManager");
+const { createFilterMenu, filterCards } = require("../shared/utils");
 
 const COMMAND_NAME = "binder";
 const SOME_RANDOM_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
@@ -54,14 +55,19 @@ module.exports = {
 
     let currentPage = 1;
     let actionRow;
+    let binderFilter;
     async function binderBuilder() {
-      const totalPages = Math.ceil(cardData.length / CARDS_PER_PAGE);
+      const filteredCardData = filterCards(cardData, binderFilter);
+      const totalPages = Math.ceil(filteredCardData.length / CARDS_PER_PAGE);
       const startIndex = (currentPage - 1) * CARDS_PER_PAGE;
       const endIndex = startIndex + CARDS_PER_PAGE;
-      const cardsOnPage = cardData.slice(startIndex, endIndex);
+      const cardsOnPage = filteredCardData.slice(startIndex, endIndex);
+
+      const typeRarityFilterMenu = createFilterMenu(cardData, binderFilter);
+      const filterMenu = new ActionRowBuilder().addComponents(typeRarityFilterMenu);
 
       const embed = new EmbedBuilder()
-        .setTitle(`${userName}'s Binder \t Page ${currentPage} / ${totalPages}`)
+        .setTitle(`${userName}'s Binder \t Page ${currentPage} / ${totalPages ? totalPages : 1}`)
         .setThumbnail(userAvatar)
         .setTimestamp(Date.now())
         .setURL(SOME_RANDOM_URL);
@@ -81,6 +87,15 @@ module.exports = {
         );
       });
 
+      if (binderFilter?.length && cardsOnPage?.length) {
+        embed.setDescription(
+          `Filter: ${binderFilter?.map((filter) => filter.split("_")[1]).join(", ")}`
+        );
+      }
+      if (!cardsOnPage.length) {
+        embed.setDescription("No cards found");
+      }
+
       const embeds = [embed, ...imageEmbeds];
 
       actionRow = new ActionRowBuilder();
@@ -92,14 +107,22 @@ module.exports = {
         actionRow.addComponents(rightPage);
       }
       if (!actionRow.components.length) {
-        return { embeds, files: attachments };
+        return {
+          embeds,
+          files: attachments,
+          components: [filterMenu],
+        };
       }
-      return { embeds, components: [actionRow], files: attachments };
+      return {
+        embeds,
+        components: [filterMenu, actionRow],
+        files: attachments,
+      };
     }
 
     await interaction.reply(await binderBuilder());
 
-    const filter = (i) => i.isButton() && i.user.id === interaction.user.id;
+    const filter = (i) => i.user.id === interaction.user.id;
     const collector = interaction.channel.createMessageComponentCollector({
       filter,
       time: BINDER_TIMEOUT,
@@ -107,10 +130,17 @@ module.exports = {
 
     collector.on("collect", async (i) => {
       await i.deferUpdate();
-      if (i.customId === "leftPage_button_id") {
-        currentPage--;
-      } else if (i.customId === "rightPage_button_id") {
-        currentPage++;
+      if (i.isStringSelectMenu()) {
+        if (i.customId.endsWith("_filter_select_id")) {
+          binderFilter = i.values;
+          currentPage = 1;
+        }
+      } else if (i.isButton()) {
+        if (i.customId === "leftPage_button_id") {
+          currentPage--;
+        } else if (i.customId === "rightPage_button_id") {
+          currentPage++;
+        }
       }
 
       await interaction.editReply(await binderBuilder());
