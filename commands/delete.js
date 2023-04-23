@@ -16,11 +16,12 @@ module.exports = {
     const allData = readDb();
     const binder = allData.find((data) => data.userId === interaction.user.id);
 
-    if (!binder)
+    if (!binder) {
       return await interaction.reply({
         content: `You don't have any cards. Try the /draw command first`,
         ephemeral: true,
       });
+    }
 
     const cardDelIndex = interaction.options.getString("id");
 

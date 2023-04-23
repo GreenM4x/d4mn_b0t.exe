@@ -67,13 +67,13 @@ module.exports = {
     });
 
     collector.on("collect", async (i) => {
+      const binder = getUserData(interaction.user.id);
       if (i.customId === "accept_button_id") {
-        const binder = getUserData(interaction.user.id);
-
         if (!binder) {
           writeDb({
             userId: interaction.user.id,
             cards: [{ id: card.id, rarity: card.rarity }],
+            stats: { cardsAddedToBinder: 1, cardsDiscarded: 0, cardsGifted: 0 },
           });
         } else {
           const userCards = binder.cards;
@@ -81,6 +81,7 @@ module.exports = {
             id: card.id,
             rarity: card.rarity,
           });
+          binder.stats.cardsAddedToBinder++;
           writeDb(binder);
         }
         embed.setColor(0x00ff00); // Green color
@@ -91,6 +92,16 @@ module.exports = {
         });
       } else if (i.customId === "denial_button_id") {
         embed.setColor(0xff0000); // Red color
+        if (!binder) {
+          writeDb({
+            userId: interaction.user.id,
+            cards: [],
+            stats: { cardsAddedToBinder: 0, cardsDiscarded: 1, cardsGifted: 0 },
+          });
+        } else {
+          binder.stats.cardsDiscarded++;
+          writeDb(binder);
+        }
         await i.update({ embeds: [embed], components: [] });
         await i.followUp({
           content: "The Card was burned and floats now in the shadow realm!",

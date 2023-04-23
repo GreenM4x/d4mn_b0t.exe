@@ -1,5 +1,4 @@
 exports.CARDS_PER_PAGE = 4;
-exports.MAX_PAGES = 4;
 
 exports.BINDER_TIMEOUT = 60000;
 exports.BINDER_COMMAND_COOLDOWN = 60000;

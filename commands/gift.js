@@ -119,6 +119,7 @@ module.exports = {
 
       if (i.customId === "accept_gift_button_id") {
         senderBinder.cards.splice(cardIndex - 1, 1);
+        senderBinder.stats.cardsGifted++;
         writeDb(senderBinder);
 
         const recipientBinder = getUserData(recipientId) || { userId: recipientId, cards: [] };

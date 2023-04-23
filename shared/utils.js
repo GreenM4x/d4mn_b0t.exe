@@ -3,6 +3,7 @@ const {
   StringSelectMenuOptionBuilder,
   StringSelectMenuBuilder,
 } = require("discord.js");
+const { getCardData } = require("./card");
 
 const createEmbed = ({
   title,
@@ -83,6 +84,14 @@ const filterCards = (cards, filters) => {
   });
 };
 
+const calculateBinderValue = (cards) => {
+  return cards.reduce((totalValue, card) => {
+    const { price } = getCardData(card);
+    return totalValue + parseFloat(price);
+  }, 0);
+};
+
 exports.createEmbed = createEmbed;
 exports.createFilterMenu = createFilterMenu;
 exports.filterCards = filterCards;
+exports.calculateBinderValue = calculateBinderValue;
