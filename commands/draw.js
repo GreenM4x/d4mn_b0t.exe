@@ -28,13 +28,13 @@ module.exports = {
     const card = getRandomCard();
 
     const accept = new ButtonBuilder()
-      .setCustomId("accept_button_id")
+      .setCustomId("accept_button_id_draw")
       .setLabel("Place in Binder")
       .setStyle(ButtonStyle.Primary)
       .setEmoji("❤️");
 
     const denial = new ButtonBuilder()
-      .setCustomId("denial_button_id")
+      .setCustomId("denial_button_id_draw")
       .setLabel("Burn It")
       .setStyle(ButtonStyle.Danger)
       .setEmoji("🔥");
@@ -60,7 +60,8 @@ module.exports = {
       files: [new AttachmentBuilder(`./db/images/${card.id}.jpg`, { name: `${card.id}.jpg` })],
     });
 
-    const filter = (i) => i.isButton() && i.user.id === interaction.user.id;
+    const filter = (i) =>
+      i.isButton() && i.user.id === interaction.user.id && i.customId.includes("_id_draw");
     const collector = interaction.channel.createMessageComponentCollector({
       filter,
       time: DRAW_TIMEOUT,
@@ -68,7 +69,7 @@ module.exports = {
 
     collector.on("collect", async (i) => {
       const binder = getUserData(interaction.user.id);
-      if (i.customId === "accept_button_id") {
+      if (i.customId === "accept_button_id_draw") {
         if (!binder) {
           writeDb({
             userId: interaction.user.id,
@@ -90,7 +91,7 @@ module.exports = {
           content: "The card was sleeved and carefully put in your Binder!",
           ephemeral: true,
         });
-      } else if (i.customId === "denial_button_id") {
+      } else if (i.customId === "denial_button_id_draw") {
         embed.setColor(0xff0000); // Red color
         if (!binder) {
           writeDb({

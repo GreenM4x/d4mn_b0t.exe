@@ -61,12 +61,12 @@ module.exports = {
     const cardData = getCardData(cardToGift);
 
     const accept = new ButtonBuilder()
-      .setCustomId("accept_gift_button_id")
+      .setCustomId("accept_gift_button_id_gift")
       .setLabel("Accept")
       .setStyle(ButtonStyle.Primary);
 
     const decline = new ButtonBuilder()
-      .setCustomId("decline_gift_button_id")
+      .setCustomId("decline_gift_button_id_gift")
       .setLabel("Decline")
       .setStyle(ButtonStyle.Danger);
 
@@ -106,7 +106,9 @@ module.exports = {
       ],
     });
 
+    const filter = (i) => i.customId.includes("id_gift");
     const collector = interaction.channel.createMessageComponentCollector({
+      filter,
       time: GIFT_TIMEOUT,
       maxButtons: 2,
     });
@@ -117,7 +119,7 @@ module.exports = {
         return;
       }
 
-      if (i.customId === "accept_gift_button_id") {
+      if (i.customId === "accept_gift_button_id_gift") {
         senderBinder.cards.splice(cardIndex - 1, 1);
         senderBinder.stats.cardsGifted++;
         writeDb(senderBinder);
@@ -130,7 +132,7 @@ module.exports = {
           content: `Congratulations, <@${recipientId}>! You received the card!`,
           components: [],
         });
-      } else if (i.customId === "decline_gift_button_id") {
+      } else if (i.customId === "decline_gift_button_id_gift") {
         await i.update({ content: `<@${recipientId}> just declined a gift. LOL`, components: [] });
       }
     });

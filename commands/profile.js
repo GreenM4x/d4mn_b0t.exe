@@ -23,7 +23,6 @@ module.exports = {
     // Calculate statistics
     const numCards = binder.cards.length;
     const binderValue = calculateBinderValue(binder.cards);
-    console.log(binderValue);
 
     // Create and send the embed
     const embed = new EmbedBuilder()
@@ -31,8 +30,9 @@ module.exports = {
       .setThumbnail(user.displayAvatarURL())
       .setColor("#0099ff")
       .addFields(
+        { name: "Balance", value: `${binder.currency}`, inline: true },
         { name: "Total Cards", value: numCards.toString(), inline: true },
-        { name: "Binder Value", value: `${binderValue.toFixed(2)} €`, inline: true },
+        { name: "Binder Value", value: `${binderValue.toFixed(2)}`, inline: true },
         {
           name: " ",
           value: " ",

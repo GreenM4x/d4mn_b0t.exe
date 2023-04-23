@@ -44,12 +44,12 @@ module.exports = {
     const cardData = binder.cards.map((card) => getCardData(card));
 
     const leftPage = new ButtonBuilder()
-      .setCustomId("leftPage_button_id")
+      .setCustomId("leftPage_button_id_binder")
       .setStyle(ButtonStyle.Secondary)
       .setEmoji("◀️");
 
     const rightPage = new ButtonBuilder()
-      .setCustomId("rightPage_button_id")
+      .setCustomId("rightPage_button_id_binder")
       .setStyle(ButtonStyle.Secondary)
       .setEmoji("▶️");
 
@@ -122,7 +122,9 @@ module.exports = {
 
     await interaction.reply(await binderBuilder());
 
-    const filter = (i) => i.user.id === interaction.user.id;
+    const filter = (i) =>
+      i.user.id === interaction.user.id &&
+      (i.customId.includes("Page_button_id_binder") || i.customId.includes("_filter_select_id"));
     const collector = interaction.channel.createMessageComponentCollector({
       filter,
       time: BINDER_TIMEOUT,
@@ -131,14 +133,14 @@ module.exports = {
     collector.on("collect", async (i) => {
       await i.deferUpdate();
       if (i.isStringSelectMenu()) {
-        if (i.customId.endsWith("_filter_select_id")) {
+        if (i.customId.endsWith("_filter_select_id_binder")) {
           binderFilter = i.values;
           currentPage = 1;
         }
       } else if (i.isButton()) {
-        if (i.customId === "leftPage_button_id") {
+        if (i.customId === "leftPage_button_id_binder") {
           currentPage--;
-        } else if (i.customId === "rightPage_button_id") {
+        } else if (i.customId === "rightPage_button_id_binder") {
           currentPage++;
         }
       }
