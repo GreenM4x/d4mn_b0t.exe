@@ -8,7 +8,17 @@ function readDb(dbName = "db.json") {
 
 function getUserData(userId, dbName = "db.json") {
   const data = readDb(dbName);
-  return data.find((item) => item.userId == userId);
+
+  const dateString = new Date().toLocaleDateString();
+  const userData = data.find((item) => item.userId == userId);
+  if (!userData.dailyPurchases || userData.dailyPurchases.date !== dateString) {
+    userData["dailyPurchases"] = {
+      date: dateString,
+      packs: {},
+    };
+  }
+
+  return userData;
 }
 
 function writeDb(obj, dbName = "db.json") {
