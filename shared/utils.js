@@ -60,7 +60,7 @@ const createFilterMenu = (cardData, activeFilters = []) => {
   ];
 
   return new StringSelectMenuBuilder()
-    .setCustomId("type_rarity_filter_select_id")
+    .setCustomId("type_rarity_filter_select_id_binder")
     .setPlaceholder("Filter by Type or Rarity")
     .addOptions(options)
     .setMinValues(0)

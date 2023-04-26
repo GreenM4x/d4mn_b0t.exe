@@ -55,15 +55,15 @@ module.exports = {
 
     let currentPage = 1;
     let actionRow;
-    let binderFilter;
+    let activeFilters;
     async function binderBuilder() {
-      const filteredCardData = filterCards(cardData, binderFilter);
+      const filteredCardData = filterCards(cardData, activeFilters);
       const totalPages = Math.ceil(filteredCardData.length / CARDS_PER_PAGE);
       const startIndex = (currentPage - 1) * CARDS_PER_PAGE;
       const endIndex = startIndex + CARDS_PER_PAGE;
       const cardsOnPage = filteredCardData.slice(startIndex, endIndex);
 
-      const typeRarityFilterMenu = createFilterMenu(cardData, binderFilter);
+      const typeRarityFilterMenu = createFilterMenu(cardData, activeFilters);
       const filterMenu = new ActionRowBuilder().addComponents(typeRarityFilterMenu);
 
       const embed = new EmbedBuilder()
@@ -87,9 +87,9 @@ module.exports = {
         );
       });
 
-      if (binderFilter?.length && cardsOnPage?.length) {
+      if (activeFilters?.length && cardsOnPage?.length) {
         embed.setDescription(
-          `Filter: ${binderFilter?.map((filter) => filter.split("_")[1]).join(", ")}`
+          `Filter: ${activeFilters?.map((filter) => filter.split("_")[1]).join(", ")}`
         );
       }
       if (!cardsOnPage.length) {
@@ -124,7 +124,8 @@ module.exports = {
 
     const filter = (i) =>
       i.user.id === interaction.user.id &&
-      (i.customId.includes("Page_button_id_binder") || i.customId.includes("_filter_select_id"));
+      (i.customId.includes("Page_button_id_binder") ||
+        i.customId.includes("_filter_select_id_binder"));
     const collector = interaction.channel.createMessageComponentCollector({
       filter,
       time: BINDER_TIMEOUT,
@@ -134,7 +135,7 @@ module.exports = {
       await i.deferUpdate();
       if (i.isStringSelectMenu()) {
         if (i.customId.endsWith("_filter_select_id_binder")) {
-          binderFilter = i.values;
+          activeFilters = i.values;
           currentPage = 1;
         }
       } else if (i.isButton()) {
