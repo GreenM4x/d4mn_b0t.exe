@@ -23,7 +23,7 @@ module.exports = {
     const cardIndex = interaction.options.getString("card_id");
     const binder = getUserData(interaction.user.id);
 
-    if (!binder) {
+    if (!binder || binder.cards.length === 0) {
       return await interaction.reply({
         content: "You don't have any cards in your binder.",
         ephemeral: true,
@@ -48,7 +48,7 @@ module.exports = {
       fields: [
         { name: "Type", value: card.type, inline: true },
         { name: "Rarity", value: card.rarity, inline: true },
-        { name: "Price", value: card.price, inline: true },
+        { name: "Price", value: `${card.price}€`, inline: true },
       ],
       timestamp: Date.now(),
       imageUrl: card.img,
@@ -96,7 +96,7 @@ module.exports = {
 
         await i.update({ embeds: [embed], components: [] });
         await i.followUp({
-          content: `You sold ${card.name} for ${parseFloat(cardValue)}!`,
+          content: `You sold ${card.name} for ${parseFloat(cardValue)}€!`,
           ephemeral: true,
         });
       } else if (i.customId === "sell_denial_button_id") {

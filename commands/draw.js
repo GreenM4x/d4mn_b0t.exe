@@ -70,11 +70,12 @@ module.exports = {
     collector.on("collect", async (i) => {
       const binder = getUserData(interaction.user.id);
       if (i.customId === "accept_button_id_draw") {
-        if (!binder) {
+        if (!binder || binder.cards.length === 0) {
           writeDb({
             userId: interaction.user.id,
             cards: [{ id: card.id, rarity: card.rarity }],
-            stats: { cardsAddedToBinder: 1, cardsDiscarded: 0, cardsGifted: 0 },
+            stats: { cardsAddedToBinder: 1, cardsDiscarded: 0, cardsGifted: 0, cardsSold: 0 },
+            currency: 0,
           });
         } else {
           const userCards = binder.cards;
@@ -93,11 +94,12 @@ module.exports = {
         });
       } else if (i.customId === "denial_button_id_draw") {
         embed.setColor(0xff0000); // Red color
-        if (!binder) {
+        if (!binder || binder.cards.length === 0) {
           writeDb({
             userId: interaction.user.id,
             cards: [],
-            stats: { cardsAddedToBinder: 0, cardsDiscarded: 1, cardsGifted: 0 },
+            stats: { cardsAddedToBinder: 0, cardsDiscarded: 1, cardsGifted: 0, cardsSold: 0 },
+            currency: 0,
           });
         } else {
           binder.stats.cardsDiscarded++;

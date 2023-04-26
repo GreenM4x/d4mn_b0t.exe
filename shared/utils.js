@@ -91,7 +91,16 @@ const calculateBinderValue = (cards) => {
   }, 0);
 };
 
+// Fisher-Yates shuffle algorithm (https://javascript.info/task/shuffle)
+const shuffle = (array) => {
+  for (let i = array.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1)); // random index from 0 to i
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+};
+
 exports.createEmbed = createEmbed;
 exports.createFilterMenu = createFilterMenu;
 exports.filterCards = filterCards;
 exports.calculateBinderValue = calculateBinderValue;
+exports.shuffle = shuffle;

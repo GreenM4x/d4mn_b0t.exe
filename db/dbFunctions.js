@@ -11,7 +11,21 @@ function getUserData(userId, dbName = "db.json") {
 
   const dateString = new Date().toLocaleDateString();
   const userData = data.find((item) => item.userId == userId);
-  if (!userData.dailyPurchases || userData.dailyPurchases.date !== dateString) {
+  if (!userData) {
+    const initialData = {
+      userId: userId,
+      currency: 0,
+      dailyPurchases: {
+        date: dateString,
+        packs: {},
+      },
+      cards: [],
+      stats: { cardsAddedToBinder: 0, cardsDiscarded: 0, cardsGifted: 0, cardsSold: 0 },
+    };
+    return initialData;
+  }
+
+  if (!userData?.dailyPurchases || userData?.dailyPurchases.date !== dateString) {
     userData["dailyPurchases"] = {
       date: dateString,
       packs: {},
@@ -31,7 +45,7 @@ function writeDb(obj, dbName = "db.json") {
       data.push(obj);
     }
     fs.writeFileSync(dbName, JSON.stringify(data)); //overwrites current data
-    return console.log("SAVE SUCESS");
+    return;
   } catch (err) {
     return console.log("FAILED TO WRITE");
   }

@@ -13,7 +13,7 @@ module.exports = {
     const user = interaction.user;
     const binder = await getUserData(user.id);
 
-    if (!binder) {
+    if (!binder || binder.cards.length === 0) {
       return await interaction.reply({
         content: "You don't have any cards. Try the /draw command first",
         ephemeral: true,
@@ -30,9 +30,9 @@ module.exports = {
       .setThumbnail(user.displayAvatarURL())
       .setColor("#0099ff")
       .addFields(
-        { name: "Balance", value: `${binder.currency}`, inline: true },
+        { name: "Balance", value: `${binder.currency.toFixed(2)}€`, inline: true },
         { name: "Total Cards", value: numCards.toString(), inline: true },
-        { name: "Binder Value", value: `${binderValue.toFixed(2)}`, inline: true },
+        { name: "Binder Value", value: `${binderValue.toFixed(2)}€`, inline: true },
         {
           name: " ",
           value: " ",
@@ -44,7 +44,8 @@ module.exports = {
           inline: true,
         },
         { name: "Cards Discarded", value: binder.stats.cardsDiscarded.toString(), inline: true },
-        { name: "Cards Gifted", value: binder.stats.cardsGifted.toString(), inline: true }
+        { name: "Cards Gifted", value: binder.stats.cardsGifted.toString(), inline: true },
+        { name: "Cards Sold", value: binder.stats.cardsSold.toString(), inline: false }
       )
       .setTimestamp();
     await interaction.reply({ embeds: [embed] });

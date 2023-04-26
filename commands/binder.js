@@ -35,7 +35,7 @@ module.exports = {
     const userName = interaction.user.username;
     const userAvatar = interaction.user.displayAvatarURL();
 
-    if (!binder) {
+    if (!binder || binder.cards.length === 0) {
       return await interaction.reply({
         content: "You don't have any cards. Try the /draw command first",
         ephemeral: true,
@@ -77,7 +77,7 @@ module.exports = {
         embed.addFields(
           { name: `[${startIndex + index + 1}] Name`, value: card.name, inline: true },
           { name: "Rarity", value: card.rarity, inline: true },
-          { name: "Price", value: card.price, inline: true }
+          { name: "Price", value: `${card.price}€`, inline: true }
         );
         attachments.push(
           new AttachmentBuilder(`./db/images/${card.id}.jpg`, { name: `${card.id}.jpg` })

@@ -13,6 +13,7 @@ const { getUserData, writeDb } = require("../db/dbFunctions");
 const { createEmbed } = require("../shared/utils");
 const boosterPacksData = require("../db/booster_packs/data.json");
 const { MAX_PURCHASES_PER_PACK_PER_DAY } = require("../shared/variables");
+const { openBoosterPack } = require("../shared/booster-pack");
 
 module.exports = {
   data: new SlashCommandBuilder().setName("shop").setDescription("Buy and open booster packs"),
@@ -21,9 +22,10 @@ module.exports = {
       .map((packData) => ({
         id: packData.code,
         name: packData.name,
-        price: packData.price, // Set a default price or calculate it based on the cards
+        price: packData.price,
         description: "A booster pack containing random cards.",
         image: `${packData.code.split("-")[0]}.png`,
+        cards: packData.cards,
       }))
       .filter((pack) =>
         fs.existsSync(path.join(__dirname, "..", "db", "booster_packs", "images", pack.image))
@@ -41,10 +43,10 @@ module.exports = {
       const embed = createEmbed({
         title: pack.name,
         description: pack.description,
-        color: 0x00ff00,
+        color: 0x000000,
         fields: [
-          { name: "Price", value: `$${pack.price}`, inline: true },
-          { name: "Your Balance", value: `$${userCurrency}`, inline: true },
+          { name: "Price", value: `$${pack.price}€`, inline: true },
+          { name: "Your Balance", value: `${userCurrency.toFixed(2)}€`, inline: true },
           {
             name: "Purchases Today",
             value: `${
@@ -78,17 +80,18 @@ module.exports = {
 
     const prevButton = new ButtonBuilder()
       .setCustomId("prev_button_id_shop")
-      .setLabel("◀️")
+      .setEmoji("◀️")
       .setStyle(ButtonStyle.Secondary);
 
     const buyButton = new ButtonBuilder()
       .setCustomId("buy_button_id_shop")
-      .setLabel("Buy and open")
-      .setStyle(ButtonStyle.Primary);
+      .setLabel("BUY")
+      .setStyle(ButtonStyle.Success)
+      .setEmoji("💰");
 
     const nextButton = new ButtonBuilder()
       .setCustomId("next_button_id_shop")
-      .setLabel("▶️")
+      .setEmoji("▶️")
       .setStyle(ButtonStyle.Secondary);
 
     const buyRow = new ActionRowBuilder().addComponents(prevButton, buyButton, nextButton);
@@ -104,7 +107,7 @@ module.exports = {
     });
 
     const filter = (i) =>
-      (i.isButton() || i.isSelectMenu()) &&
+      (i.isButton() || i.isStringSelectMenu()) &&
       i.user.id === interaction.user.id &&
       i.customId.includes("id_shop");
     const collector = interaction.channel.createMessageComponentCollector({
@@ -123,18 +126,10 @@ module.exports = {
       }
 
       const pack = dailyBoosterPacks[currentPage];
-      await i.update({
-        embeds: [displayShopEmbed()],
-        components: [createSelectMenu(dailyBoosterPacks[currentPage]), buyRow],
-        files: [
-          new AttachmentBuilder("./db/booster_packs/images/" + pack.image, { name: pack.image }),
-        ],
-      });
-
       if (i.customId === "buy_button_id_shop") {
         if (userCurrency < pack.price) {
           await i.reply({
-            content: "You don't have enough currency to buy this pack.",
+            content: "You don't have enough money to buy this pack.",
             ephemeral: true,
           });
           return;
@@ -148,16 +143,26 @@ module.exports = {
           return;
         }
 
-        await i.followUp({
-          content: `You bought ${pack.name} for $${pack.price}.`,
+        await interaction.followUp({
+          content: `You bought ${pack.name} for ${pack.price}€.`,
           ephemeral: true,
         });
         binder.currency -= pack.price;
         binder.dailyPurchases.packs[pack.id] = (binder.dailyPurchases.packs[pack.id] || 0) + 1;
         writeDb(binder);
-        // Implement opening booster pack here
-        // show the cards in the pack one card per page.
-        // you are then able to add to binder or discard the card.
+        await openBoosterPack(interaction, binder, pack);
+      }
+
+      if (i.customId === "buy_button_id_shop") {
+        collector.stop();
+      } else {
+        await i.update({
+          embeds: [displayShopEmbed()],
+          components: [createSelectMenu(dailyBoosterPacks[currentPage]), buyRow],
+          files: [
+            new AttachmentBuilder("./db/booster_packs/images/" + pack.image, { name: pack.image }),
+          ],
+        });
       }
     });
 
