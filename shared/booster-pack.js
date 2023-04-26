@@ -17,9 +17,10 @@ const openBoosterPack = async (interaction, binder, pack) => {
   const displayCardEmbed = () => {
     const embed = createEmbed({
       title: cardData.name,
-      description: `Card Value: ${cardData.price}€`,
       fields: [
-        { name: "Cards drawn", value: `${currentCardIndex + 1}/${cards.length}`, inline: true },
+        { name: "Cards pulled", value: `${currentCardIndex + 1}/${cards.length}`, inline: false },
+        { name: "Price", value: `${cardData.price}€`, inline: true },
+        { name: "Rarity", value: cardData.rarity, inline: true },
       ],
       color: getColorForCardType(cardData.type),
       imageUrl: cardData.img,
