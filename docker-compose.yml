@@ -15,6 +15,7 @@ services:
       - ../database/db.json:/GreenBot/db.json:rw
       - ../database/cardInfo.json:/GreenBot/db/cardInfo.json:rw
       - ../database/images:/GreenBot/db/images:rw
+      - ../database/booster_packs:/GreenBot/db/booster_packs:rw
     networks:
       - proxy
 
