@@ -45,7 +45,7 @@ module.exports = {
         description: pack.description,
         color: 0x000000,
         fields: [
-          { name: "Price", value: `$${pack.price}€`, inline: true },
+          { name: "Price", value: `${pack.price}€`, inline: true },
           { name: "Your Balance", value: `${userCurrency.toFixed(2)}€`, inline: true },
           {
             name: "Purchases Today",
