@@ -9,6 +9,7 @@ exports.DRAW_TIMEOUT = 30000;
 exports.GIFT_TIMEOUT = 60000;
 
 exports.MAX_PURCHASES_PER_PACK_PER_DAY = 1;
+exports.MAX_BOOSTERS_IN_SHOP = 5;
 
 // the RARITIES is just a reference of all rarities and their probability.
 // It represents the rarity beeing in a booster pack if the pool of cards of that booster pack includes the given rarity

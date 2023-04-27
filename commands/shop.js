@@ -12,7 +12,7 @@ const seedrandom = require("seedrandom");
 const { getUserData, writeDb } = require("../db/dbFunctions");
 const { createEmbed } = require("../shared/utils");
 const boosterPacksData = require("../db/booster_packs/data.json");
-const { MAX_PURCHASES_PER_PACK_PER_DAY } = require("../shared/variables");
+const { MAX_PURCHASES_PER_PACK_PER_DAY, MAX_BOOSTERS_IN_SHOP } = require("../shared/variables");
 const { openBoosterPack } = require("../shared/booster-pack");
 
 module.exports = {
@@ -23,7 +23,8 @@ module.exports = {
         id: packData.code,
         name: packData.name,
         price: packData.price,
-        description: "A booster pack containing random cards.",
+        description:
+          "A booster pack containing random cards. \n Five new booster packs are available every day.",
         image: `${packData.code.split("-")[0]}.png`,
         cards: packData.cards,
       }))
@@ -56,6 +57,9 @@ module.exports = {
           },
         ],
         imageUrl: `attachment://${pack.image}`,
+        footer: {
+          text: `Page ${currentPage + 1} / ${dailyBoosterPacks.length}`,
+        },
       });
       return embed;
     };
@@ -182,7 +186,7 @@ const generateDailyBoosterPacks = (boosterPacks) => {
   const randomBoosterPacks = boosterPacks
     .map((pack) => ({ ...pack, random: rng() }))
     .sort((a, b) => a.random - b.random)
-    .slice(0, 5);
+    .slice(0, MAX_BOOSTERS_IN_SHOP);
 
   return randomBoosterPacks;
 };

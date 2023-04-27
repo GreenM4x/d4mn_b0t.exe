@@ -150,10 +150,15 @@ module.exports = {
     });
 
     collector.on("end", async () => {
-      actionRow?.components?.forEach((component) => {
-        component.setDisabled(true);
-      });
-      await interaction.editReply({ components: [actionRow] });
+      if (actionRow && actionRow.components.length > 0) {
+        actionRow.components.forEach((component) => {
+          component.setDisabled(true);
+        });
+        await interaction.editReply({ components: [actionRow] });
+      } else {
+        await interaction.editReply({ components: [] });
+      }
+
       await interaction.followUp({
         content: "Binder closed after a while the energy needed to keep it open was too big",
         ephemeral: true,

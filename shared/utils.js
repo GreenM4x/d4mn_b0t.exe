@@ -14,6 +14,7 @@ const createEmbed = ({
   timestamp,
   url,
   description,
+  footer,
 }) => {
   const embed = new EmbedBuilder().setTitle(title).setColor(color).setURL(url);
 
@@ -35,6 +36,10 @@ const createEmbed = ({
 
   if (description) {
     embed.setDescription(description);
+  }
+
+  if (footer) {
+    embed.setFooter(footer);
   }
 
   return embed;
