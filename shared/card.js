@@ -1,6 +1,7 @@
 const cardInfo = require("../db/cardInfo.json");
 
 const getCardData = (binderCard) => {
+  if (!binderCard) return null;
   const cardDetails = cardInfo.data.find((card) => card.id === binderCard.id);
   const rarity = binderCard.rarity;
   const price = cardDetails.card_prices[0].cardmarket_price;
