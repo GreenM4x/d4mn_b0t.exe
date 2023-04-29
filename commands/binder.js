@@ -41,7 +41,10 @@ module.exports = {
         ephemeral: true,
       });
     }
-    const cardData = binder.cards.map((card) => getCardData(card));
+    const cardData = binder.cards.map((card, index) => ({
+      ...getCardData(card),
+      originalIndex: index,
+    }));
 
     const leftPage = new ButtonBuilder()
       .setCustomId("leftPage_button_id_binder")
@@ -95,7 +98,7 @@ module.exports = {
       const attachments = [];
       cardsOnPage.forEach((card, index) => {
         embed.addFields(
-          { name: `[${startIndex + index + 1}] Name`, value: card.name, inline: true },
+          { name: `[${card.originalIndex + 1}] Name`, value: card.name, inline: true },
           { name: "Rarity", value: card.rarity, inline: true },
           { name: "Price", value: `${card.price}€`, inline: true }
         );
@@ -107,7 +110,7 @@ module.exports = {
         );
       });
 
-      let description = "";
+      let description = " ";
       if (activeFilters?.length && cardsOnPage?.length) {
         description += `Filter: ${activeFilters
           ?.map((filter) => filter.split("_")[1])
