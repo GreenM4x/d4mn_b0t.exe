@@ -89,6 +89,53 @@ const filterCards = (cards, filters) => {
   });
 };
 
+function createSortMenu(activeSort) {
+  const sortMenu = new StringSelectMenuBuilder()
+    .setCustomId("sort_select_id_binder")
+    .setPlaceholder("Sort by")
+    .addOptions([
+      {
+        label: "Sort by: Rarity",
+        value: "sort_rarity",
+        default: activeSort === "sort_rarity",
+      },
+      {
+        label: "Sort by: Price",
+        value: "sort_price",
+        default: activeSort === "sort_price",
+      },
+      {
+        label: "Sort by: Type",
+        value: "sort_type",
+        default: activeSort === "sort_type",
+      },
+    ]);
+
+  return sortMenu;
+}
+
+const sortCards = (cards, sortBy) => {
+  if (!sortBy) return cards;
+
+  const sortedCards = [...cards];
+
+  switch (sortBy) {
+    case "sort_rarity":
+      sortedCards.sort((a, b) => a.rarity.localeCompare(b.rarity));
+      break;
+    case "sort_price":
+      sortedCards.sort((a, b) => b.price - a.price);
+      break;
+    case "sort_type":
+      sortedCards.sort((a, b) => a.type.localeCompare(b.type));
+      break;
+    default:
+      break;
+  }
+
+  return sortedCards;
+};
+
 const calculateBinderValue = (cards) => {
   return cards.reduce((totalValue, card) => {
     const { price } = getCardData(card);
@@ -99,7 +146,7 @@ const calculateBinderValue = (cards) => {
 // Fisher-Yates shuffle algorithm (https://javascript.info/task/shuffle)
 const shuffle = (array) => {
   for (let i = array.length - 1; i > 0; i--) {
-    let j = Math.floor(Math.random() * (i + 1)); // random index from 0 to i
+    let j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
   }
 };
@@ -109,3 +156,5 @@ exports.createFilterMenu = createFilterMenu;
 exports.filterCards = filterCards;
 exports.calculateBinderValue = calculateBinderValue;
 exports.shuffle = shuffle;
+exports.createSortMenu = createSortMenu;
+exports.sortCards = sortCards;

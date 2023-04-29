@@ -10,7 +10,7 @@ const { getUserData } = require("../db/dbFunctions");
 const { CARDS_PER_PAGE, BINDER_TIMEOUT, BINDER_COMMAND_COOLDOWN } = require("../shared/variables");
 const { getCardData } = require("../shared/card");
 const cooldownManager = require("../shared/cooldownManager");
-const { createFilterMenu, filterCards } = require("../shared/utils");
+const { createFilterMenu, filterCards, sortCards, createSortMenu } = require("../shared/utils");
 
 const COMMAND_NAME = "binder";
 const SOME_RANDOM_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
@@ -53,21 +53,41 @@ module.exports = {
       .setStyle(ButtonStyle.Secondary)
       .setEmoji("▶️");
 
+    const filterIconButton = new ButtonBuilder()
+      .setCustomId("filterIconButton_binder")
+      .setStyle(ButtonStyle.Secondary)
+      .setEmoji("🔍");
+
+    const sortIconButton = new ButtonBuilder()
+      .setCustomId("sortIconButton_binder")
+      .setStyle(ButtonStyle.Secondary)
+      .setEmoji("🔃");
+
     let currentPage = 1;
     let actionRow;
     let activeFilters;
-    async function binderBuilder() {
-      const filteredCardData = filterCards(cardData, activeFilters);
-      const totalPages = Math.ceil(filteredCardData.length / CARDS_PER_PAGE);
+    let activeSort;
+    let totalPages;
+    async function binderBuilder(filterMenuVisible = false, sortMenuVisible = false) {
+      filterMenuVisible = filterMenuVisible || (activeFilters && activeFilters.length > 0);
+      sortMenuVisible = sortMenuVisible || !!activeSort;
+
+      const filteredCardData = sortCards(filterCards(cardData, activeFilters), activeSort);
+      totalPages = Math.ceil(filteredCardData.length / CARDS_PER_PAGE);
       const startIndex = (currentPage - 1) * CARDS_PER_PAGE;
       const endIndex = startIndex + CARDS_PER_PAGE;
       const cardsOnPage = filteredCardData.slice(startIndex, endIndex);
 
       const typeRarityFilterMenu = createFilterMenu(cardData, activeFilters);
-      const filterMenu = new ActionRowBuilder().addComponents(typeRarityFilterMenu);
+      const filterMenuRow = new ActionRowBuilder().addComponents(
+        filterMenuVisible ? typeRarityFilterMenu : []
+      );
+      const sortMenu = createSortMenu(activeSort);
+      const sortMenuRow = new ActionRowBuilder().addComponents(sortMenuVisible ? sortMenu : []);
 
       const embed = new EmbedBuilder()
-        .setTitle(`${userName}'s Binder \t Page ${currentPage} / ${totalPages ? totalPages : 1}`)
+        .setTitle(`${userName}'s Binder`)
+        .setFooter({ text: `Page ${currentPage}/${totalPages}` })
         .setThumbnail(userAvatar)
         .setTimestamp(Date.now())
         .setURL(SOME_RANDOM_URL);
@@ -87,35 +107,46 @@ module.exports = {
         );
       });
 
+      let description = "";
       if (activeFilters?.length && cardsOnPage?.length) {
-        embed.setDescription(
-          `Filter: ${activeFilters?.map((filter) => filter.split("_")[1]).join(", ")}`
-        );
+        description += `Filter: ${activeFilters
+          ?.map((filter) => filter.split("_")[1])
+          .join(", ")} \n`;
       }
+      if (activeSort && cardsOnPage?.length) {
+        description += `Sort: ${activeSort.split("_")[1]}`;
+      }
+      if (activeFilters || activeSort) {
+        embed.setDescription(description);
+      }
+
       if (!cardsOnPage.length) {
         embed.setDescription("No cards found");
       }
 
       const embeds = [embed, ...imageEmbeds];
 
-      actionRow = new ActionRowBuilder();
-      if (currentPage > 1) {
-        actionRow.addComponents(leftPage);
-      }
+      const actionRowElements = [
+        totalPages > 1 ? leftPage : null,
+        totalPages > 1 ? rightPage : null,
+        filterIconButton,
+        sortIconButton,
+      ];
+      actionRow = new ActionRowBuilder().addComponents(
+        actionRowElements.filter((element) => element !== null)
+      );
 
-      if (currentPage < totalPages) {
-        actionRow.addComponents(rightPage);
-      }
+      const rows = [filterMenuRow, sortMenuRow, actionRow];
       if (!actionRow.components.length) {
         return {
           embeds,
           files: attachments,
-          components: [filterMenu],
+          components: rows.filter((row) => row.components.length > 0),
         };
       }
       return {
         embeds,
-        components: [filterMenu, actionRow],
+        components: rows.filter((row) => row.components.length > 0),
         files: attachments,
       };
     }
@@ -125,7 +156,8 @@ module.exports = {
     const filter = (i) =>
       i.user.id === interaction.user.id &&
       (i.customId.includes("Page_button_id_binder") ||
-        i.customId.includes("_filter_select_id_binder"));
+        i.customId.includes("_select_id_binder") ||
+        i.customId.includes("IconButton_binder"));
     const collector = interaction.channel.createMessageComponentCollector({
       filter,
       time: BINDER_TIMEOUT,
@@ -133,20 +165,41 @@ module.exports = {
 
     collector.on("collect", async (i) => {
       await i.deferUpdate();
+      let filterMenuVisible = false;
+      let sortMenuVisible = false;
+
+      if (i.isButton()) {
+        if (i.customId === "filterIconButton_binder") {
+          if (activeFilters && activeFilters.length > 0) {
+            activeFilters = undefined;
+          } else {
+            filterMenuVisible = true;
+          }
+        } else if (i.customId === "sortIconButton_binder") {
+          if (activeSort) {
+            activeSort = undefined;
+          } else {
+            sortMenuVisible = true;
+          }
+        } else if (i.customId === "leftPage_button_id_binder") {
+          currentPage = ((currentPage - 2 + totalPages) % totalPages) + 1;
+        } else if (i.customId === "rightPage_button_id_binder") {
+          currentPage = (currentPage % totalPages) + 1;
+        }
+      }
+
       if (i.isStringSelectMenu()) {
         if (i.customId.endsWith("_filter_select_id_binder")) {
           activeFilters = i.values;
           currentPage = 1;
         }
-      } else if (i.isButton()) {
-        if (i.customId === "leftPage_button_id_binder") {
-          currentPage--;
-        } else if (i.customId === "rightPage_button_id_binder") {
-          currentPage++;
+        if (i.customId.endsWith("sort_select_id_binder")) {
+          activeSort = i.values[0];
+          currentPage = 1;
         }
       }
 
-      await interaction.editReply(await binderBuilder());
+      await interaction.editReply(await binderBuilder(filterMenuVisible, sortMenuVisible));
     });
 
     collector.on("end", async () => {
