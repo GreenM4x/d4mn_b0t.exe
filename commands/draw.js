@@ -33,13 +33,13 @@ module.exports = {
       .setStyle(ButtonStyle.Primary)
       .setEmoji("❤️");
 
-    const denial = new ButtonBuilder()
-      .setCustomId("denial_button_id_draw")
-      .setLabel("Burn It")
-      .setStyle(ButtonStyle.Danger)
-      .setEmoji("🔥");
+    const sell = new ButtonBuilder()
+      .setCustomId("sell_button_id_draw")
+      .setLabel("Sell")
+      .setStyle(ButtonStyle.Success)
+      .setEmoji("💰");
 
-    const actionRow = new ActionRowBuilder().addComponents(accept, denial);
+    const actionRow = new ActionRowBuilder().addComponents(accept, sell);
 
     const embed = createEmbed({
       title: card.name,
@@ -48,7 +48,7 @@ module.exports = {
       fields: [
         { name: "Type", value: card.type, inline: true },
         { name: "Rarity", value: card.rarity, inline: true },
-        { name: "Price", value: card.price, inline: true },
+        { name: "Price", value: `${card.price}€`, inline: true },
       ],
       timestamp: Date.now(),
       imageUrl: card.img,
@@ -92,22 +92,23 @@ module.exports = {
           content: "The card was sleeved and carefully put in your Binder!",
           ephemeral: true,
         });
-      } else if (i.customId === "denial_button_id_draw") {
+      } else if (i.customId === "sell_button_id_draw") {
         embed.setColor(0xff0000); // Red color
         if (!binder || binder.cards.length === 0) {
           writeDb({
             userId: interaction.user.id,
             cards: [],
-            stats: { cardsAddedToBinder: 0, cardsDiscarded: 1, cardsGifted: 0, cardsSold: 0 },
+            stats: { cardsAddedToBinder: 0, cardsDiscarded: 0, cardsGifted: 0, cardsSold: 1 },
             currency: 0,
           });
         } else {
-          binder.stats.cardsDiscarded++;
+          binder.stats.cardsSold++;
+          binder.currency += parseFloat(card.price);
           writeDb(binder);
         }
         await i.update({ embeds: [embed], components: [] });
         await i.followUp({
-          content: "The Card was burned and floats now in the shadow realm!",
+          content: `You sold the card for ${card.price}€ to next best duellist on the street!`,
           ephemeral: true,
         });
       }
