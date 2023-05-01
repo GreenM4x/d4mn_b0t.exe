@@ -22,7 +22,8 @@ const getRandomCard = () => {
   const price = card.card_prices[0].cardmarket_price;
   const img = `attachment://${card.id}.jpg`;
   const rarity =
-    card.card_sets[Math.floor(Math.random() * (card.card_sets?.length || 1))].set_rarity;
+    card.card_sets?.[Math.floor(Math.random() * (card.card_sets?.length || 1))]?.set_rarity ||
+    "Common";
 
   return {
     id: card.id,
