@@ -7,7 +7,7 @@ const { RARITIES } = require("./variables");
 const openBoosterPack = async (interaction, binder, pack) => {
   const cards = createBoosterPack(pack.cards);
   let currentCardIndex = 0;
-  let cardData = getCardData(cards[currentCardIndex]);
+  let cardData = getCardData(cards[currentCardIndex], pack.id);
   let cardsAdded = 0;
   let cardsSold = 0;
   const totalBoosterValue = cards
