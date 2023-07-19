@@ -56,6 +56,11 @@ const getColorForCardType = (type) => {
 };
 
 const getCardPrice = (cardDetails, rarity, packId = null) => {
+  const isBasicRarity = ["Common", "Rare", "Super Rare"].includes(rarity);
+  if (isBasicRarity) {
+    return cardDetails.card_prices[0].cardmarket_price;
+  }
+  
   const packCode = packId ? packId.split("-")[0] : null;
 
   const price = cardDetails.card_sets.find(
