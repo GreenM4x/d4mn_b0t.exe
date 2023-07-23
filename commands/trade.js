@@ -59,6 +59,7 @@ module.exports = {
       });
     }
 
+    // max 25 options
     let userSelectMenu = new StringSelectMenuBuilder()
       .setCustomId("user_select_trade")
       .setPlaceholder(`Choose a card from ${interaction.user.username}'s binder`)
@@ -66,7 +67,7 @@ module.exports = {
         userBinder.cards.map((card, index) => ({
           label: `${getCardData(card).name} - ${getCardData(card).rarity} - ${getCardData(card).price}€`,
           value: index.toString(),
-        }))
+        })).slice(0, 25)
       );
 
     let targetSelectMenu = new StringSelectMenuBuilder()
@@ -76,7 +77,7 @@ module.exports = {
         targetBinder.cards.map((card, index) => ({
           label: `${getCardData(card).name} - ${getCardData(card).rarity} - ${getCardData(card).price}€`,
           value: index.toString(),
-        }))
+        })).slice(0, 25)
       );
 
     let userActionRow = new ActionRowBuilder().addComponents(userSelectMenu);
@@ -315,7 +316,7 @@ module.exports = {
             label: `${getCardData(card).name} - ${getCardData(card).rarity} - ${getCardData(card).price}€`,
             value: index.toString(),
             default: index === selectedCardIndex,
-          }))
+          })).slice(0, 25)
         );
 
       return new ActionRowBuilder().addComponents(selectMenu);
