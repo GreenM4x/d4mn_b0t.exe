@@ -45,12 +45,15 @@ module.exports = {
     // console.log('jsonSongs :>> ', jsonSongs);
     const songsArray = getRandom(JSON.parse(jsonSongs), 5);
     // console.log('songsArray :>> ', songsArray);
-
+    console.log('voiceChannel.id :>> ', voiceChannel.id);
+    console.log('interaction.guildId :>> ', interaction.guildId);
+    console.log('interaction.channel.id :>> ', interaction.channel.id);
     const player = await client.music.joinVoiceChannel({
       guildId: interaction.guildId,
       channelId: voiceChannel.id,
+      shardId: interaction.guild?.shardId ?? 0,
       messageChannelId: interaction.channel.id,
-      shardId: 0,
+      // shardId: 0,
       // textChannelId: interaction.channel.id,
       // selfDeaf: true,
       // selfMute: false,
@@ -58,16 +61,14 @@ module.exports = {
     });
 
     // player.queue.channel = interaction.channel;
-    // await player.connect();
 
     const tracks = [];
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 1; i++) {
       const result = await player.node.rest.resolve("ytsearch:taylorswift");
       if(!result.data.length) {
         console.log('No tracks found');
         continue;
       };
-      console.log(result);
       const metadata = result.data.shift();
       tracks.push(metadata);
     }
@@ -79,25 +80,33 @@ module.exports = {
         `:notes: Get ready!`
       );
     interaction.followUp({ embeds: [startTriviaEmbed] });
-    // player.queue.add(tracks);
-    await player.playTrack({ track: { encoded: tracks[0].encoded } })
-    await player.setGlobalVolume(50);
-      return;
+   
+    const score = new Map();
+
+    const membersInChannel = interaction.member.voice.channel.members;
+    membersInChannel.each(user => {
+      if (user.user.bot) return;
+      score.set(user.user.username, 0);
+    });
+    playTrivia(interaction.channel, player, songsArray, score, tracks);
+    
   }
 };
 
-async function playTrivia(textChannel, player, songsArray, score) {
+async function playTrivia(textChannel, player, songsArray, score, tracks, i = 0) {
+  const currentTrack = tracks[i];
   // Randomize a number but one that won't be too close to the track ending
-  const max = player.queue.tracks?.[0]?.info.duration ?? 20000; // milliseconds
-  const min = 10 * 1000; // milliseconds
-  const randomTime = Math.floor(Math.random() * (max - min + 1)) + min;
+  // const max = player.queue.tracks?.[0]?.info.duration ?? 20000; // milliseconds
+  // const min = 10 * 1000; // milliseconds
+  // const randomTime = Math.floor(Math.random() * (max - min + 1)) + min;
   if (!player.playing) {
-    await player.play();
+    await player.playTrack({ track: { encoded: currentTrack.encoded } })
+    await player.setGlobalVolume(1000);
   } else {
     await player.skip();
   }
 
-  await player.seek(randomTime);
+  await player.seekTo(10);
 
   let songNameFound = false;
   let songSingerFound = false;
@@ -216,12 +225,12 @@ async function playTrivia(textChannel, player, songsArray, score) {
 
       textChannel.send({ embeds: [embed] });
 
-      player.disconnect();
+      player.leaveVoiceChannel(player.guildId);
       client.music.destroyPlayer(player.guildId);
       client.triviaMap.delete(textChannel.guildId);
       return;
     }
 
-    return playTrivia(textChannel, player, songsArray, score);
+    return playTrivia(textChannel, player, songsArray, score, tracks, i++);
   });
 }
