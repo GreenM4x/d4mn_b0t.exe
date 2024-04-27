@@ -11,8 +11,9 @@ const client = new ExtendedClient();
 const shoukaku = new Shoukaku(new Connectors.DiscordJS(client), [
   {
     name: "YugiBot",
-    url: "pi:2333",
+    url: "lavalink.lucask.dev:2053",
     auth: "someSecurePW",
+    secure: true
   }
 ])
 client.music = shoukaku;
