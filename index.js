@@ -1,9 +1,13 @@
 const fs = require("node:fs");
 const path = require("node:path");
-const { Client, Collection, Events, GatewayIntentBits } = require("discord.js");
+const { Collection, Events } = require("discord.js");
+const ExtendedClient = require("./shared/music/ExtendedClient");
+
+
 require("dotenv").config();
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const client = new ExtendedClient();
+
 
 client.commands = new Collection();
 
@@ -23,9 +27,17 @@ for (const file of commandFiles) {
   }
 }
 
+
+client.on(Events.Raw, async (d) => {
+  client.music.sendRawData(d)
+})
+client.on(Events.ClientReady, async (c) => {
+  await client.music.init({ ...c.user })
+});
+
 // When the client is ready, run this code (only once)
 // We use 'c' for the event parameter to keep it separate from the already defined 'client'
-client.once(Events.ClientReady, (c) => {
+client.once(Events.ClientReady, async (c) => {
   console.log(`Ready! Logged in as ${c.user.tag}`);
 });
 

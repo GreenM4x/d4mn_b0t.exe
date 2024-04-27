@@ -79,6 +79,8 @@ jobs:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           GUILD_ID: ${{ secrets.GUILD_ID }}
+          LAVALINK_HOST: ${{ secrets.LAVALINK_HOST }}
+          LAVALINK_PW: ${{ secrets.LAVALINK_PW }}
 
       - name: Remove old unused image
         run: docker image prune -a -f --filter "label=name=dank"

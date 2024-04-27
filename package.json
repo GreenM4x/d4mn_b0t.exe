@@ -12,9 +12,9 @@
   "author": "GreenM4x",
   "license": "ISC",
   "dependencies": {
-    "@napi-rs/canvas": "^0.1.39",
     "discord.js": "^14.8.0",
     "dotenv": "^16.0.3",
+    "lavalink-client": "^2.1.7",
     "seedrandom": "^3.0.5"
   },
   "devDependencies": {

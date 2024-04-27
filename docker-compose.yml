@@ -10,6 +10,8 @@ services:
       - DISCORD_TOKEN=${DISCORD_TOKEN}
       - CLIENT_ID=${CLIENT_ID}
       - GUILD_ID=${GUILD_ID}
+      - LAVALINK_HOST=${LAVALINK_HOST}
+      - LAVALINK_PW=${LAVALINK_PW}
     restart: unless-stopped
     volumes:
       - ../database/db.json:/GreenBot/db.json:rw
