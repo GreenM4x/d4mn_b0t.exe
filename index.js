@@ -2,11 +2,20 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { Collection, Events } = require("discord.js");
 const ExtendedClient = require("./shared/music/ExtendedClient");
+const { Shoukaku, Connectors } = require("shoukaku");
 
 
 require("dotenv").config();
 
 const client = new ExtendedClient();
+const shoukaku = new Shoukaku(new Connectors.DiscordJS(client), [
+  {
+    name: "YugiBot",
+    url: "pi:2333",
+    auth: "someSecurePW",
+  }
+])
+client.music = shoukaku;
 
 
 client.commands = new Collection();
@@ -28,13 +37,8 @@ for (const file of commandFiles) {
 }
 
 
-client.on(Events.Raw, async (d) => {
-  client.music.sendRawData(d)
-})
-client.on(Events.ClientReady, async (c) => {
-  await client.music.init({ ...c.user })
-});
 
+shoukaku.on("error", (_, error) => console.error(error));
 // When the client is ready, run this code (only once)
 // We use 'c' for the event parameter to keep it separate from the already defined 'client'
 client.once(Events.ClientReady, async (c) => {

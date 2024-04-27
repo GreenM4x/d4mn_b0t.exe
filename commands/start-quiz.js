@@ -46,22 +46,30 @@ module.exports = {
     const songsArray = getRandom(JSON.parse(jsonSongs), 5);
     // console.log('songsArray :>> ', songsArray);
 
-    const player = client.music.createPlayer({
+    const player = await client.music.joinVoiceChannel({
       guildId: interaction.guildId,
-      voiceChannelId: voiceChannel.id,
-      textChannelId: interaction.channel.id,
-      selfDeaf: true,
-      selfMute: false,
-      volume: 50
+      channelId: voiceChannel.id,
+      messageChannelId: interaction.channel.id,
+      shardId: 0,
+      // textChannelId: interaction.channel.id,
+      // selfDeaf: true,
+      // selfMute: false,
+      // volume: 50
     });
 
     // player.queue.channel = interaction.channel;
-    await player.connect();
+    // await player.connect();
 
     const tracks = [];
     for (let i = 0; i < 5; i++) {
-      const result = await player.search({query: 'taylor swift'}, interaction.user);
-      tracks.push(result.tracks[0]);
+      const result = await player.node.rest.resolve("ytsearch:taylorswift");
+      if(!result.data.length) {
+        console.log('No tracks found');
+        continue;
+      };
+      console.log(result);
+      const metadata = result.data.shift();
+      tracks.push(metadata);
     }
     
     const startTriviaEmbed = new EmbedBuilder()
@@ -71,17 +79,10 @@ module.exports = {
         `:notes: Get ready!`
       );
     interaction.followUp({ embeds: [startTriviaEmbed] });
-    player.queue.add(tracks);
-
-    const score = new Map();
-
-    const membersInChannel = interaction.member.voice.channel.members;
-    membersInChannel.each(user => {
-      if (user.user.bot) return;
-      score.set(user.user.username, 0);
-    });
-
-    playTrivia(interaction.channel, player, songsArray, score);
+    // player.queue.add(tracks);
+    await player.playTrack({ track: { encoded: tracks[0].encoded } })
+    await player.setGlobalVolume(50);
+      return;
   }
 };
 

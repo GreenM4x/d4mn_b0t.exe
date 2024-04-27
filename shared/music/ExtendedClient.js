@@ -15,41 +15,41 @@ class ExtendedClient extends Client {
       ]
     });
 
-    this.music = new LavalinkManager({
-      nodes: [
-        { // Important to have at least 1 node
-          authorization: "someSecurePW",
-          host: "pi",
-          port: 2333,
-          id: "quiz"
-        }
-      ],
-      sendToShard: (guildId, payload) =>
-        this.guilds.cache.get(guildId)?.shard?.send(payload),
-      client: {
-        id: process.env.CLIENT_ID,
-        username: "YugiBot",
-      },
-      // everything down below is optional
-      autoSkip: false,
-      playerOptions: {
-        clientBasedPositionUpdateInterval: 150,
-        defaultSearchPlatform: "ytmsearch",
-        volumeDecrementer: 0.75,
-        //requesterTransformer: requesterTransformer,
-        onDisconnect: {
-          autoReconnect: true,
-          destroyPlayer: false
-        },
-        onEmptyQueue: {
-          destroyAfterMs: 30_000,
-          //autoPlayFunction: autoPlayFunction,
-        }
-      },
-      queueOptions: {
-        maxPreviousTracks: 25
-      },
-    });
+    // this.music = new LavalinkManager({
+    //   nodes: [
+    //     { // Important to have at least 1 node
+    //       authorization: "someSecurePW",
+    //       host: "pi",
+    //       port: 2333,
+    //       id: "quiz"
+    //     }
+    //   ],
+    //   sendToShard: (guildId, payload) =>
+    //     this.guilds.cache.get(guildId)?.shard?.send(payload),
+    //   client: {
+    //     id: process.env.CLIENT_ID,
+    //     username: "YugiBot",
+    //   },
+    //   // everything down below is optional
+    //   autoSkip: false,
+    //   playerOptions: {
+    //     clientBasedPositionUpdateInterval: 150,
+    //     defaultSearchPlatform: "ytmsearch",
+    //     volumeDecrementer: 0.75,
+    //     //requesterTransformer: requesterTransformer,
+    //     onDisconnect: {
+    //       autoReconnect: true,
+    //       destroyPlayer: false
+    //     },
+    //     onEmptyQueue: {
+    //       destroyAfterMs: 30_000,
+    //       //autoPlayFunction: autoPlayFunction,
+    //     }
+    //   },
+    //   queueOptions: {
+    //     maxPreviousTracks: 25
+    //   },
+    // });
 
     this.queueHistory = new Map();
 
