@@ -17,7 +17,7 @@ module.exports = {
         .setName("number_of_songs")
         .setDescription("Number of songs to play in the quiz (default 15)")
         .setRequired(false)
-    ), // This makes the option optional
+    ),
   async execute(interaction) {
     await interaction.deferReply();
     const client = interaction.client;
@@ -56,8 +56,8 @@ module.exports = {
       .setColor("#60D1F6")
       .setTitle(":musical_note: The Music Quiz will start shortly!")
       .setDescription(
-        `This game will have **${numberOfSongs} song** previews, **30 seconds** per song. \n
-        You'll have to guess the **artist name** and the **song name**. \n
+        `This game will have **${numberOfSongs} song** previews, **30 seconds** per song.\n
+        You'll have to guess the **artist name** and the **song name**.\n
 \`\`\`diff
 + 1 point for the artist name
 + 1 point for the song name
@@ -68,6 +68,7 @@ You can type \`skip\` to vote for passing a song.\n
       );
     interaction.followUp({ embeds: [startTriviaEmbed] });
 
+    await playCountdown(player);
     const tracks = [];
     for (let song of songsArray) {
       const result = await player.node.rest.resolve(song.url);
@@ -77,6 +78,9 @@ You can type \`skip\` to vote for passing a song.\n
       }
       tracks.push(result.data);
     }
+    // wait for the countdown to finish
+    await new Promise((resolve) => setTimeout(resolve, 15000));
+    await player.stopTrack();
 
     const score = new Map();
     const membersInChannel = interaction.member.voice.channel?.members;
@@ -96,6 +100,12 @@ You can type \`skip\` to vote for passing a song.\n
   },
 };
 
+async function playCountdown(player) {
+  // const countdownTrack = await player.node.rest.resolve("https://www.youtube.com/watch?v=H_bB0sAqLNg");
+  await player.playTrack({ track: { encoded: 'QAAA0AMANDEwIFNlY29uZCBDb3VudERvd24gVGltZXIgV2l0aCBWb2ljZSBUbyBTdGFydCBBIFNob3cADlJhaW5ib3cgVGltZXJzAAAAAAAAxzgAC0hfYkIwc0FxTE5nAAEAK2h0dHBzOi8vd3d3LnlvdXR1YmUuY29tL3dhdGNoP3Y9SF9iQjBzQXFMTmcBADBodHRwczovL2kueXRpbWcuY29tL3ZpL0hfYkIwc0FxTE5nL21xZGVmYXVsdC5qcGcAAAd5b3V0dWJlAAAAAAAAAAA=' } });
+  await player.seekTo(19000);
+}
+
 async function playTrivia(interaction, player, songsArray, score, tracks, index) {
   if (index >= tracks.length) {
     const finalEmbed = new EmbedBuilder()
@@ -109,9 +119,19 @@ async function playTrivia(interaction, player, songsArray, score, tracks, index)
   }
 
   const currentTrack = tracks[index];
-  console.log("Now playing:", currentTrack.info?.title);
-
+  const trackLength = currentTrack.info?.length;
+  const minStart = 5000;
+  // Maximum start time is 5 seconds before the end minus 30 seconds for the trivia duration
+  const maxStart = trackLength - 35000;
+  if (maxStart <= minStart) {
+    playTrivia(interaction, player, songsArray, score, tracks, index + 1);
+    return;
+  }
+  const randomStart = Math.floor(Math.random() * (maxStart - minStart + 1)) + minStart;
+  console.log("Now playing:", currentTrack.info?.title, "at", randomStart / 1000, "seconds");
   await player.playTrack({ track: { encoded: currentTrack.encoded } });
+  await player.seekTo(randomStart);
+
   let songNameFound = false;
   let songSingerFound = false;
   const skippedArray = [];
