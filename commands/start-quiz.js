@@ -90,8 +90,13 @@ async function playTrivia(interaction, player, songsArray, score, tracks, index)
   let songSingerFound = false;
   const skippedArray = [];
 
+  
   const collector = interaction.channel.createMessageCollector({
     time: 30000
+  });
+  interaction.client.triviaMap.set(interaction.channel.guildId, {
+    collector,
+    wasTriviaEndCalled: false
   });
 
   collector.on('collect', msg => {
@@ -135,6 +140,12 @@ async function playTrivia(interaction, player, songsArray, score, tracks, index)
 });
 
   collector.on('end', (_, reason) => {
+    const trivia = interaction.client.triviaMap.get(interaction.channel.guildId);
+    if (trivia.wasTriviaEndCalled) {
+      interaction.client.triviaMap.delete(interaction.channel.guildId);
+      return;
+    }
+
     if(reason === 'time' || reason === 'skipped' || reason === 'guessed') {
       const songInfo = `${capitalizeWords(songsArray[index].singers.join(", "))}: ${capitalizeWords(songsArray[index].title)}`;
       const resultEmbed = new EmbedBuilder()

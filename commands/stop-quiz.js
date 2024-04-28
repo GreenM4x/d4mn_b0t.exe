@@ -4,23 +4,31 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('stop-quiz')
         .setDescription('End a music quiz'),
-    execute(interaction) {
+    async execute(interaction) {
         const client = interaction.client;
+        const userVoiceChannelId = interaction.member.voice.channelId; // ID of the user's voice channel
 
-        if (!client.triviaMap.has(interaction.guildId)) {
-            return interaction.reply(
-                'There is no music trivia playing at the moment!'
-            );
+        if (!userVoiceChannelId) {
+            return interaction.reply({ content: 'You are not in any voice channel.', ephemeral: true });
         }
 
+        // Check if the bot is in a voice channel
         const player = client.music.players.get(interaction.guildId);
+        if (!player) {
+            return interaction.reply({ content: 'No active music quiz found.', ephemeral: true });
+        }
 
+        // Check for an active trivia collector and stop it if exists
         const trivia = client.triviaMap.get(interaction.guildId);
-        const collector = trivia.collector;
-        trivia.wasTriviaEndCalled = true;
-        collector.stop();
+        if (trivia && trivia.collector) {
+            trivia.wasTriviaEndCalled = true;
+            trivia.collector.stop();
+        }
 
-        client.music.leaveVoiceChannel(player.guildId);
+        // Leave the voice channel
+        await client.music.leaveVoiceChannel(interaction.guildId);
+        client.triviaMap.delete(interaction.guildId); // Clear trivia data for the guild
+
         return interaction.reply('Ended the music quiz!');
     }
 };
