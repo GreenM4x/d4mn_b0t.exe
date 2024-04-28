@@ -4,20 +4,18 @@ const { Collection, Events } = require("discord.js");
 const ExtendedClient = require("./shared/music/ExtendedClient");
 const { Shoukaku, Connectors } = require("shoukaku");
 
-
 require("dotenv").config();
 
 const client = new ExtendedClient();
 const shoukaku = new Shoukaku(new Connectors.DiscordJS(client), [
   {
     name: "YugiBot",
-    url: "lavalink.lucask.dev:2053",
+    url: "lavalink.lucask.dev",
     auth: "someSecurePW",
-    secure: true
-  }
-])
+    secure: true,
+  },
+]);
 client.music = shoukaku;
-
 
 client.commands = new Collection();
 
@@ -36,8 +34,6 @@ for (const file of commandFiles) {
     );
   }
 }
-
-
 
 shoukaku.on("error", (_, error) => console.error(error));
 // When the client is ready, run this code (only once)
