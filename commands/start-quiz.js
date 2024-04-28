@@ -11,7 +11,11 @@ const fs = require('fs');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('start-quiz')
-    .setDescription('Better than MEE6'),
+    .setDescription('Better than MEE6')
+    .addIntegerOption(option =>
+      option.setName('number_of_songs')
+        .setDescription('Number of songs to play in the quiz (default 15)')
+        .setRequired(false)), // This makes the option optional
   async execute(interaction) {
     await interaction.deferReply();
     const client = interaction.client;
@@ -20,6 +24,8 @@ module.exports = {
     if (!voiceChannel) {
       return interaction.followUp(':no_entry: You\'re not in a voice channel!');
     }
+
+    const numberOfSongs = interaction.options.getInteger('number_of_songs') || 15;
 
     if (client.music.players.get(interaction.guildId) && client.triviaMap.get(interaction.guildId)) {
       return interaction.followUp('Wait until the current music quiz ends');
@@ -30,7 +36,7 @@ module.exports = {
     }
 
     const jsonSongs = fs.readFileSync('./db/music/songs.json', 'utf-8');
-    const songsArray = getRandom(JSON.parse(jsonSongs), 3);
+    const songsArray = getRandom(JSON.parse(jsonSongs), numberOfSongs);
 
     const player = await client.music.joinVoiceChannel({
       guildId: interaction.guildId,
@@ -42,7 +48,7 @@ module.exports = {
       .setColor('#60D1F6')
       .setTitle(':musical_note: The Music Quiz will start shortly!')
       .setDescription(
-        `This game will have **15 song** previews, **30 seconds** per song. \n\n
+        `This game will have **${numberOfSongs} song** previews, **30 seconds** per song. \n\n
       You'll have to guess the **artist name** and the **song name**.`
       )
       .setFooter({ text: '🔥 Sit back relax, the music quiz is starting in **10 seconds**' });
