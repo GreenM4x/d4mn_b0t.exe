@@ -32,7 +32,7 @@ const getLeaderBoard = arr => {
   let leaderBoard = '__**LEADERBOARD**__ \n\n';
   const emojis = ['🥇', '🥈', '🥉'];
   arr.forEach((item, index) => {
-      leaderBoard += `${emojis[index] || ''} **${item[0]}:** ${item[1]} points\n\n`;
+      leaderBoard += `${emojis[index] || ''} - <@${item[0]}> - ${item[1]} points\n\n`;
   });
 
   return leaderBoard.trim();

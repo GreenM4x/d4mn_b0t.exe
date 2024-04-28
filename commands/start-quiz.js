@@ -62,7 +62,7 @@ module.exports = {
     const membersInChannel = interaction.member.voice.channel.members;
     membersInChannel.each(user => {
       if (!user.user.bot) {
-        score.set(user.user.username, 0);
+        score.set(user.user.id, 0);
       }
     });
 
@@ -83,7 +83,7 @@ async function playTrivia(interaction, player, songsArray, score, tracks, index)
   }
 
   const currentTrack = tracks[index];
-  console.log('Now playing:', currentTrack.info.title);
+  console.log('Now playing:', currentTrack.info?.title);
 
   await player.playTrack({ track: { encoded: currentTrack.encoded } });
   let songNameFound = false;
@@ -100,13 +100,13 @@ async function playTrivia(interaction, player, songsArray, score, tracks, index)
   });
 
   collector.on('collect', msg => {
-    if (!score.has(msg.author.username)) return;
+    if (!score.has(msg.author.id)) return;
     const guess = normalizeValue(msg.content);
     const title = normalizeValue(songsArray[index].title);
     const singers = songsArray[index].singers.map(normalizeValue);
 
-    if (guess === 'skip' && !skippedArray.includes(msg.author.username)) {
-      skippedArray.push(msg.author.username);
+    if (guess === 'skip' && !skippedArray.includes(msg.author.id)) {
+      skippedArray.push(msg.author.id);
       if (skippedArray.length > score.size * 0.6) {
         collector.stop('skipped');
       }
@@ -119,14 +119,14 @@ async function playTrivia(interaction, player, songsArray, score, tracks, index)
 
     if (guessedSinger && !songSingerFound) {
       songSingerFound = true;
-      score.set(msg.author.username, score.get(msg.author.username) + 1);
+      score.set(msg.author.id, score.get(msg.author.id) + 1);
       msg.react('✅');
       reacted = true;
     }
     
     if (guessedTitle && !songNameFound) {
       songNameFound = true;
-      score.set(msg.author.username, score.get(msg.author.username) + 1);
+      score.set(msg.author.id, score.get(msg.author.id) + 1);
       msg.react('✅');
       reacted = true;
     }
