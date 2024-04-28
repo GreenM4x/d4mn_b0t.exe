@@ -13,12 +13,6 @@ module.exports = {
             );
         }
 
-        if (
-            interaction.guild.me.voice.channel !== interaction.member.voice.channel
-        ) {
-            return interaction.reply('Please join my voice channel and try again!');
-        }
-
         const player = client.music.players.get(interaction.guildId);
 
         const trivia = client.triviaMap.get(interaction.guildId);
@@ -26,9 +20,7 @@ module.exports = {
         trivia.wasTriviaEndCalled = true;
         collector.stop();
 
-        player.queue.length = 0;
-        player.disconnect();
-        client.music.destroyPlayer(player.guildId);
+        client.music.leaveVoiceChannel(player.guildId);
         return interaction.reply('Ended the music quiz!');
     }
 };
