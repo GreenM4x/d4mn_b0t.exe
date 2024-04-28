@@ -147,7 +147,7 @@ async function playTrivia(interaction, player, songsArray, score, tracks, index)
     }
 
     if(reason === 'time' || reason === 'skipped' || reason === 'guessed') {
-      const songInfo = `${capitalizeWords(songsArray[index].singers.join(", "))}: ${capitalizeWords(songsArray[index].title)}`;
+      const songInfo = `${capitalizeWords(songsArray[index].singers.join(", "))} - ${capitalizeWords(songsArray[index].title)}`;
       const resultEmbed = new EmbedBuilder()
         .setColor('#60D1F6')
         .setTitle(`It was: ${songInfo}`)
