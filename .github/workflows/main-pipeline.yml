@@ -83,4 +83,4 @@ jobs:
           LAVALINK_PW: ${{ secrets.LAVALINK_PW }}
 
       - name: Remove old unused image
-        run: docker image prune -a -f --filter "label=name=dank"
+        run: docker image prune -a -f --filter "label=name=greenbot"

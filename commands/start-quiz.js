@@ -12,6 +12,12 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("start-quiz")
     .setDescription("Better than MEE6")
+    .addBooleanOption((option) =>
+      option
+        .setName("hardcore")
+        .setDescription("Enable hardcore mode (default false)")
+        .setRequired(false)
+    )
     .addIntegerOption((option) =>
       option
         .setName("number_of_songs")
@@ -43,7 +49,9 @@ module.exports = {
       return interaction.followUp("Wait until the music queue gets empty and try again!");
     }
 
-    const jsonSongs = fs.readFileSync("./db/music/songs.json", "utf-8");
+    const isHardcore = interaction.options.getBoolean("hardcore") || false;
+    const songPath = isHardcore ? "./db/music/extended.json" : "./db/music/songs.json";
+    const jsonSongs = fs.readFileSync(songPath, "utf-8");
     const songsArray = getRandom(JSON.parse(jsonSongs), numberOfSongs);
 
     const player = await client.music.joinVoiceChannel({
@@ -104,6 +112,7 @@ async function playCountdown(player) {
   // const countdownTrack = await player.node.rest.resolve("https://www.youtube.com/watch?v=H_bB0sAqLNg");
   await player.playTrack({ track: { encoded: 'QAAA0AMANDEwIFNlY29uZCBDb3VudERvd24gVGltZXIgV2l0aCBWb2ljZSBUbyBTdGFydCBBIFNob3cADlJhaW5ib3cgVGltZXJzAAAAAAAAxzgAC0hfYkIwc0FxTE5nAAEAK2h0dHBzOi8vd3d3LnlvdXR1YmUuY29tL3dhdGNoP3Y9SF9iQjBzQXFMTmcBADBodHRwczovL2kueXRpbWcuY29tL3ZpL0hfYkIwc0FxTE5nL21xZGVmYXVsdC5qcGcAAAd5b3V0dWJlAAAAAAAAAAA=' } });
   await player.seekTo(19000);
+  await player.setGlobalVolume(80);
 }
 
 async function playTrivia(interaction, player, songsArray, score, tracks, index) {
