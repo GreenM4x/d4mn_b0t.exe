@@ -6,6 +6,7 @@ class ExtendedClient extends Client {
   queueHistory: Map<string, any>;
   triviaMap: Map<string, any>;
   commands: Collection<string, any>;
+  quizActive: Record<string, boolean>;
 
   constructor() {
     super({
