@@ -1,48 +1,48 @@
 const timeouts = new Map();
 
 function check(userId, command) {
-  const key = `${userId}_${command}`;
-  const cooldownExpiration = timeouts.get(key);
+	const key = `${userId}_${command}`;
+	const cooldownExpiration = timeouts.get(key);
 
-  if (cooldownExpiration && cooldownExpiration > Date.now()) {
-    return true;
-  }
+	if (cooldownExpiration && cooldownExpiration > Date.now()) {
+		return true;
+	}
 
-  return false;
+	return false;
 }
 
 function add(userId, command, cooldownDuration) {
-  const key = `${userId}_${command}`;
-  const cooldownExpiration = Date.now() + cooldownDuration;
-  timeouts.set(key, cooldownExpiration);
+	const key = `${userId}_${command}`;
+	const cooldownExpiration = Date.now() + cooldownDuration;
+	timeouts.set(key, cooldownExpiration);
 
-  setTimeout(() => remove(userId, command), cooldownDuration);
+	setTimeout(() => remove(userId, command), cooldownDuration);
 }
 
 function remove(userId, command) {
-  const key = `${userId}_${command}`;
-  timeouts.delete(key);
+	const key = `${userId}_${command}`;
+	timeouts.delete(key);
 }
 
 function remainingCooldown(userId, command) {
-  const key = `${userId}_${command}`;
-  const cooldownExpiration = timeouts.get(key);
+	const key = `${userId}_${command}`;
+	const cooldownExpiration = timeouts.get(key);
 
-  if (!cooldownExpiration) {
-    return 0;
-  }
+	if (!cooldownExpiration) {
+		return 0;
+	}
 
-  const remainingTime = cooldownExpiration - Date.now();
-  const seconds = Math.floor(remainingTime / 1000) % 60;
-  const minutes = Math.floor(remainingTime / (1000 * 60)) % 60;
-  const formattedTime = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+	const remainingTime = cooldownExpiration - Date.now();
+	const seconds = Math.floor(remainingTime / 1000) % 60;
+	const minutes = Math.floor(remainingTime / (1000 * 60)) % 60;
+	const formattedTime = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
 
-  return remainingTime > 0 ? formattedTime : "0s";
+	return remainingTime > 0 ? formattedTime : '0s';
 }
 
 module.exports = {
-  check,
-  add,
-  remove,
-  remainingCooldown,
+	check,
+	add,
+	remove,
+	remainingCooldown,
 };
