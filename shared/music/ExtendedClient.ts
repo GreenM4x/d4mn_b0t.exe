@@ -1,6 +1,12 @@
-const { Client, GatewayIntentBits } = require('discord.js');
+import { Client, GatewayIntentBits, Collection } from 'discord.js';
+import { Shoukaku } from 'shoukaku';
 
 class ExtendedClient extends Client {
+  music: Shoukaku | undefined;
+  queueHistory: Map<string, any>;
+  triviaMap: Map<string, any>;
+  commands: Collection<string, any>;
+
   constructor() {
     super({
       intents: [
@@ -12,13 +18,10 @@ class ExtendedClient extends Client {
       ]
     });
 
-
     this.queueHistory = new Map();
-
     this.triviaMap = new Map();
+    this.commands = new Collection();
   }
-
-
 }
 
-module.exports = ExtendedClient;
+export default ExtendedClient;
