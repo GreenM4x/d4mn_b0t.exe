@@ -16,6 +16,8 @@ type Song = {
 	url: string;
 };
 
+const TIME_BETWEEN_SONGS = 2000;
+
 export const data = new SlashCommandBuilder()
 	.setName('start-quiz')
 	.setDescription('Better than MEE6')
@@ -74,7 +76,7 @@ You can type \`skip\` to vote for passing a song.\n
 		);
 	await interaction.followUp({ embeds: [startTriviaEmbed] });
 
-	const countdownResult = await playCountdown(player, interaction);
+	await playCountdownTrack(player);
 	const tracks: Track[] = [];
 	for (const song of songsArray) {
 		const result = (await player.node.rest.resolve(song.url)) as TrackResult;
@@ -84,6 +86,7 @@ You can type \`skip\` to vote for passing a song.\n
 		}
 		tracks.push(result.data);
 	}
+	const countdownResult = await playCountdown(player, interaction);
 	if (!countdownResult) {
 		console.log('Quiz was stopped during countdown.');
 		return;
@@ -111,8 +114,7 @@ async function playCountdown(
 	interaction: ChatInputCommandInteraction<CacheType>,
 ): Promise<boolean> {
 	const client = interaction.client as ExtendedClient;
-	let countdown = 16; // 10 seconds countdown
-	await playCountdownTrack(player);
+	let countdown = 11; // 10 seconds countdown
 	while (countdown > 0) {
 		if (!client.quizActive[interaction.guildId]) {
 			console.log('Countdown halted.');
@@ -122,6 +124,8 @@ async function playCountdown(
 		countdown--;
 	}
 	console.log('Countdown finished.');
+	await player.stopTrack();
+	await player.clearFilters();
 	return true;
 }
 
@@ -134,6 +138,7 @@ async function playCountdownTrack(player: Player) {
 	});
 	await player.seekTo(19000);
 	await player.setGlobalVolume(80);
+	await player.setTimescale({ speed: 1.4 });
 }
 
 async function playTrivia(
@@ -169,8 +174,8 @@ async function playTrivia(
 	console.log('Playing track:', currentTrack.info?.title + ' - ' + currentTrack.info?.author);
 	await player.seekTo(randomStart);
 
-	let songNameFound = false;
-	let songSingerFound = false;
+	let songNameFoundBy: string = null;
+	let songSingerFoundBy: string = null;
 	const skippedArray: string[] = [];
 
 	const collector = interaction.channel.createMessageCollector({ time: 30000 });
@@ -195,24 +200,41 @@ async function playTrivia(
 
 		const guessedSinger = singers.some((singer) => guess.includes(singer));
 		const guessedTitle = guess.includes(title);
-
+		let pointsAwarded = 0;
 		let reacted = false;
 
-		if (guessedSinger && !songSingerFound) {
-			songSingerFound = true;
+		if (guessedSinger && !songSingerFoundBy) {
+			songSingerFoundBy = msg.author.id;
+			pointsAwarded++;
+			score.set(msg.author.id, score.get(msg.author.id) + 1);
+			void msg.react('✅');
+
+			reacted = true;
+		}
+
+		if (guessedTitle && !songNameFoundBy) {
+			songNameFoundBy = msg.author.id;
+			pointsAwarded++;
 			score.set(msg.author.id, score.get(msg.author.id) + 1);
 			void msg.react('✅');
 			reacted = true;
 		}
 
-		if (guessedTitle && !songNameFound) {
-			songNameFound = true;
-			score.set(msg.author.id, score.get(msg.author.id) + 1);
-			void msg.react('✅');
-			reacted = true;
+		if (guessedSinger && guessedTitle && songSingerFoundBy === songNameFoundBy) {
+			if (pointsAwarded == 2) {
+				score.set(msg.author.id, score.get(msg.author.id) + 1); // Add an extra point for getting both correct
+				void interaction.channel.send(`<@${msg.author.id}> Correct! You earn **3 point**`);
+			}
 		}
 
-		if (songNameFound && songSingerFound) {
+		if (pointsAwarded > 0) {
+			score.set(msg.author.id, score.get(msg.author.id) + pointsAwarded);
+			void interaction.channel.send(
+				`<@${msg.author.id}> Correct! You earn **${pointsAwarded} point**`,
+			);
+		}
+
+		if (songNameFoundBy && songSingerFoundBy) {
 			console.log('Both guessed correctly.');
 			collector.stop('guessed');
 		} else if (!reacted) {
@@ -220,7 +242,7 @@ async function playTrivia(
 		}
 	});
 
-	collector.on('end', (_, reason) => {
+	collector.on('end', async (_, reason) => {
 		const guildId = interaction.channel.guildId;
 		const trivia = client.triviaMap.get(guildId);
 		if (trivia.wasTriviaEndCalled) {
@@ -240,7 +262,9 @@ async function playTrivia(
 			void interaction.channel.send({ embeds: [resultEmbed] });
 		}
 
-		if (reason !== 'skipped' || songSingerFound || songNameFound) {
+		if (reason !== 'skipped' || songSingerFoundBy || songNameFoundBy) {
+			void player.stopTrack();
+			await new Promise((resolve) => setTimeout(resolve, TIME_BETWEEN_SONGS));
 			void playTrivia(interaction, player, songsArray, score, tracks, index + 1);
 		} else {
 			void interaction.channel.send('Song skipped');
