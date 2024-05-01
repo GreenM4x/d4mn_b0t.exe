@@ -1,6 +1,6 @@
 {
 	"compilerOptions": {
-		"rootDir": "./src/",
+		"rootDir": "./",
 		"module": "ESNext",
 		"moduleResolution": "node",
 		"esModuleInterop": true,
@@ -18,7 +18,7 @@
 		"importHelpers": true,
 		"removeComments": true
 	},
-	"files": ["src/index.ts"],
+	"files": ["./index.ts"],
 	"include": ["./**/*.ts"],
 	"exclude": ["node_modules", "dist"]
 }

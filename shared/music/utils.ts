@@ -1,6 +1,10 @@
-function getRandom(arr, n) {
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+type LeaderBoardItem = [string, number];
+
+export function getRandom<T>(arr: T[], n: number): T[] {
 	if (n > arr.length) throw new RangeError('getRandom: more elements taken than available!');
-	const result = new Array(n);
+	const result = new Array<T>(n);
 	let len = arr.length;
 	const taken = new Array(len);
 	while (n--) {
@@ -11,7 +15,7 @@ function getRandom(arr, n) {
 	return result;
 }
 
-const normalizeValue = (value) =>
+export const normalizeValue = (value: string): string =>
 	value
 		.normalize('NFD')
 		.replace(/[\u0300-\u036f]/g, '') // remove diacritics
@@ -20,10 +24,10 @@ const normalizeValue = (value) =>
 		.replace(/\s+/g, ' ')
 		.toLowerCase(); // remove duplicate spaces
 
-const capitalizeWords = (str) =>
-	str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+export const capitalizeWords = (str: string): string =>
+	str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase());
 
-const getLeaderBoard = (arr) => {
+export const getLeaderBoard = (arr: LeaderBoardItem[]): string | undefined => {
 	if (!arr || !arr.length) return;
 	arr.sort((a, b) => b[1] - a[1]);
 
@@ -34,11 +38,4 @@ const getLeaderBoard = (arr) => {
 	});
 
 	return leaderBoard.trim();
-};
-
-module.exports = {
-	getRandom,
-	normalizeValue,
-	capitalizeWords,
-	getLeaderBoard,
 };

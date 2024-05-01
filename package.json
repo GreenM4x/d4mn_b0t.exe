@@ -11,7 +11,8 @@
     "build": "tsc --project tsconfig.production.json",
     "start": "node --no-warnings --es-module-specifier-resolution=node ./dist/index.js",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
-		"lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix"
+    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
+    "deploy": "npm run build && node deploy-commands.js"
   },
   "keywords": [
     "discord"
@@ -21,6 +22,7 @@
   "dependencies": {
     "discord.js": "^14.8.0",
     "dotenv": "^16.0.3",
+    "fuse.js": "^7.0.0",
     "lavalink-client": "^2.1.7",
     "seedrandom": "^3.0.5",
     "shoukaku": "^4.0.1"

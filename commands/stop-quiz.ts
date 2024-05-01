@@ -2,9 +2,9 @@ import { SlashCommandBuilder } from '@discordjs/builders';
 import { ChatInputCommandInteraction, CacheType } from 'discord.js';
 import ExtendedClient from '../shared/music/ExtendedClient.js';
 
-interface Trivia {
+export interface Trivia {
 	wasTriviaEndCalled: boolean;
-	collector: { stop: () => void }; // Simplified type, adjust according to actual usage
+	collector: { stop: () => void };
 }
 
 export const data = new SlashCommandBuilder()

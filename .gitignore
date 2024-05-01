@@ -4,3 +4,4 @@ db.json
 db/images
 db/cardInfo.json
 db/booster_packs
+dist

@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Client, GatewayIntentBits, Collection } from 'discord.js';
+import { Client, GatewayIntentBits, Collection, MessageCollector } from 'discord.js';
 import { Shoukaku } from 'shoukaku';
+
+export type TriviaMap = {
+	wasTriviaEndCalled: boolean;
+	collector: MessageCollector;
+};
 
 class ExtendedClient extends Client {
 	music: Shoukaku | undefined;

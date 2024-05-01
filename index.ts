@@ -43,7 +43,7 @@ async function loadCommands() {
 				console.log(`[WARNING] The command at ${fileURL} is missing required properties.`);
 			}
 		} catch (error) {
-			console.error(`Error loading command at ${fileURL}: ${error}`);
+			console.error(error);
 		}
 	}
 }
