@@ -7,10 +7,10 @@ const {
   ButtonBuilder,
   ButtonStyle,
 } = require("discord.js");
-const { getUserData, writeDb } = require("../db/dbFunctions");
-const { getCardData } = require("../shared/card");
-const cooldownManager = require("../shared/cooldownManager");
-const { TRADE_COOLDOWN } = require("../shared/variables");
+const { getUserData, writeDb } = require("../db/dbFunctions.cjs");
+const { getCardData } = require("../shared/card.cjs");
+const cooldownManager = require("../shared/cooldownManager.cjs");
+const { TRADE_COOLDOWN } = require("../shared/variables.cjs");
 
 const COMMAND_NAME = "trade";
 const SOME_RANDOM_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";

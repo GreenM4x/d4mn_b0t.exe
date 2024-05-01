@@ -3,7 +3,7 @@ const {
   StringSelectMenuOptionBuilder,
   StringSelectMenuBuilder,
 } = require("discord.js");
-const { getCardData } = require("./card");
+const { getCardData } = require("./card.cjs");
 
 const createEmbed = ({
   title,

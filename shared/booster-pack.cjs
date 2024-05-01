@@ -1,8 +1,8 @@
 const { AttachmentBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle } = require("discord.js");
-const { writeDb } = require("../db/dbFunctions");
-const { getCardData, getColorForCardType } = require("./card");
-const { shuffle, createEmbed } = require("./utils");
-const { RARITIES } = require("./variables");
+const { writeDb } = require("../db/dbFunctions.cjs");
+const { getCardData, getColorForCardType } = require("./card.cjs");
+const { shuffle, createEmbed } = require("./utils.cjs");
+const { RARITIES } = require("./variables.cjs");
 
 const openBoosterPack = async (interaction, binder, pack) => {
   const cards = createBoosterPack(pack.cards);

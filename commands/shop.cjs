@@ -9,11 +9,11 @@ const {
   StringSelectMenuBuilder,
 } = require("discord.js");
 const seedrandom = require("seedrandom");
-const { getUserData, writeDb } = require("../db/dbFunctions");
-const { createEmbed } = require("../shared/utils");
+const { getUserData, writeDb } = require("../db/dbFunctions.cjs");
+const { createEmbed } = require("../shared/utils.cjs");
 const boosterPacksData = require("../db/booster_packs/data.json");
-const { MAX_PURCHASES_PER_PACK_PER_DAY, MAX_BOOSTERS_IN_SHOP } = require("../shared/variables");
-const { openBoosterPack } = require("../shared/booster-pack");
+const { MAX_PURCHASES_PER_PACK_PER_DAY, MAX_BOOSTERS_IN_SHOP } = require("../shared/variables.cjs");
+const { openBoosterPack } = require("../shared/booster-pack.cjs");
 
 module.exports = {
   data: new SlashCommandBuilder().setName("shop").setDescription("Buy and open booster packs"),

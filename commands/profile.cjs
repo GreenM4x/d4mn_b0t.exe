@@ -1,7 +1,7 @@
 const { SlashCommandBuilder } = require("@discordjs/builders");
 const { EmbedBuilder } = require("discord.js");
-const { getUserData } = require("../db/dbFunctions");
-const { calculateBinderValue } = require("../shared/utils");
+const { getUserData } = require("../db/dbFunctions.cjs");
+const { calculateBinderValue } = require("../shared/utils.cjs");
 
 const COMMAND_NAME = "profile";
 

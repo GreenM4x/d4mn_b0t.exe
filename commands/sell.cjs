@@ -5,9 +5,9 @@ const {
   ButtonStyle,
   AttachmentBuilder,
 } = require("discord.js");
-const { getUserData, writeDb } = require("../db/dbFunctions");
-const { getColorForCardType, getCardData } = require("../shared/card");
-const { createEmbed } = require("../shared/utils");
+const { getUserData, writeDb } = require("../db/dbFunctions.cjs");
+const { getColorForCardType, getCardData } = require("../shared/card.cjs");
+const { createEmbed } = require("../shared/utils.cjs");
 
 module.exports = {
   data: new SlashCommandBuilder()

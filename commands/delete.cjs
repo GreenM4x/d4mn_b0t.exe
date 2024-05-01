@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require("discord.js");
-const { readDb } = require("../db/dbFunctions");
+const { readDb } = require("../db/dbFunctions.cjs");
 const fs = require("fs");
 
 module.exports = {

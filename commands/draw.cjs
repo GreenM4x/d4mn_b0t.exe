@@ -5,11 +5,11 @@ const {
   ButtonStyle,
   AttachmentBuilder,
 } = require("discord.js");
-const { writeDb, getUserData } = require("../db/dbFunctions");
-const { getColorForCardType, getRandomCard } = require("../shared/card");
-const { DRAW_COMMAND_COOLDOWN, DRAW_TIMEOUT } = require("../shared/variables");
-const cooldownManager = require("../shared/cooldownManager");
-const { createEmbed } = require("../shared/utils");
+const { writeDb, getUserData } = require("../db/dbFunctions.cjs");
+const { getColorForCardType, getRandomCard } = require("../shared/card.cjs");
+const { DRAW_COMMAND_COOLDOWN, DRAW_TIMEOUT } = require("../shared/variables.cjs");
+const cooldownManager = require("../shared/cooldownManager.cjs");
+const { createEmbed } = require("../shared/utils.cjs");
 
 const COMMAND_NAME = "draw";
 module.exports = {

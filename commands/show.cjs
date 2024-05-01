@@ -1,8 +1,8 @@
 const { SlashCommandBuilder } = require("@discordjs/builders");
 const { AttachmentBuilder } = require("discord.js");
-const { getCardData, getColorForCardType } = require("../shared/card");
-const { getUserData } = require("../db/dbFunctions");
-const { createEmbed } = require("../shared/utils");
+const { getCardData, getColorForCardType } = require("../shared/card.cjs");
+const { getUserData } = require("../db/dbFunctions.cjs");
+const { createEmbed } = require("../shared/utils.cjs");
 
 const COMMAND_NAME = "show";
 

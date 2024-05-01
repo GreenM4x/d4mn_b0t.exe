@@ -6,11 +6,11 @@ const {
   EmbedBuilder,
   AttachmentBuilder,
 } = require("discord.js");
-const { getUserData } = require("../db/dbFunctions");
-const { CARDS_PER_PAGE, BINDER_TIMEOUT, BINDER_COMMAND_COOLDOWN } = require("../shared/variables");
-const { getCardData } = require("../shared/card");
-const cooldownManager = require("../shared/cooldownManager");
-const { createFilterMenu, filterCards, sortCards, createSortMenu } = require("../shared/utils");
+const { getUserData } = require("../db/dbFunctions.cjs");
+const { CARDS_PER_PAGE, BINDER_TIMEOUT, BINDER_COMMAND_COOLDOWN } = require("../shared/variables.cjs");
+const { getCardData } = require("../shared/card.cjs");
+const cooldownManager = require("../shared/cooldownManager.cjs");
+const { createFilterMenu, filterCards, sortCards, createSortMenu } = require("../shared/utils.cjs");
 
 const COMMAND_NAME = "binder";
 const SOME_RANDOM_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";

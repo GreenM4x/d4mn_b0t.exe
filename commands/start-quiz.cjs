@@ -5,7 +5,7 @@ const {
   normalizeValue,
   capitalizeWords,
   getLeaderBoard,
-} = require("../shared/music/utils");
+} = require("../shared/music/utils.cjs");
 const fs = require("fs");
 
 module.exports = {

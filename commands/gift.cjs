@@ -5,11 +5,11 @@ const {
   ButtonStyle,
   AttachmentBuilder,
 } = require("discord.js");
-const { writeDb, getUserData } = require("../db/dbFunctions");
-const { getCardData, getColorForCardType } = require("../shared/card");
-const { createEmbed } = require("../shared/utils");
-const { GIFT_TIMEOUT } = require("../shared/variables");
-const cooldownManager = require("../shared/cooldownManager");
+const { writeDb, getUserData } = require("../db/dbFunctions.cjs");
+const { getCardData, getColorForCardType } = require("../shared/card.cjs");
+const { createEmbed } = require("../shared/utils.cjs");
+const { GIFT_TIMEOUT } = require("../shared/variables.cjs");
+const cooldownManager = require("../shared/cooldownManager.cjs");
 
 const COMMAND_NAME = "gift";
 
