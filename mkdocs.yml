@@ -1,0 +1,28 @@
+site_name: D43m_Bot.exe - Docs
+repo_url: https://github.com/GreenM4x/d43m_bot.exe
+theme:
+    name: material
+    features:
+        - navigation.tabs
+        - navigation.selections
+        - navigation.top
+        - toc.integrate
+        - search.suggest
+        - search.highlight
+        - content.tabs.link
+        - content.code.annotation
+        - content.code.copy
+    language: en
+    palette:
+        - scheme: slate
+          toggle:
+              icon: material/toggle-switch-off
+              name: Switch to Light mode
+          primary: teal
+          accent: purple
+        - scheme: default
+          toggle:
+              icon: material/toggle-switch-outline
+              name: Switch to Dark mode
+          primary: teal
+          accent: lime
