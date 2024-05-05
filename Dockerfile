@@ -1,13 +1,5 @@
-# FROM node:16-alpine as build
-# WORKDIR /GreenBot
-# COPY ./package*.json ./
-# RUN npm install
-# COPY ./ ./
-# RUN npm run build
-
-
-FROM node:18-alpine
-LABEL name="dank"
+FROM node:20-alpine
+LABEL name="greenbot"
 WORKDIR /GreenBot
 COPY ./package*.json ./
 RUN npm ci --production
