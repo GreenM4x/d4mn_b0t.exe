@@ -192,6 +192,9 @@ async function playTrivia(
 
 		if (guess === 'skip' && !skippedArray.includes(msg.author.id)) {
 			skippedArray.push(msg.author.id);
+			void interaction.channel.send(
+				`<@${msg.author.id}> voted to skip the song. ${skippedArray.length}/${score.size} votes.`,
+			);
 			if (skippedArray.length > score.size * 0.6) {
 				collector.stop('skipped');
 			}
@@ -206,7 +209,6 @@ async function playTrivia(
 		if (guessedSinger && !songSingerFoundBy) {
 			songSingerFoundBy = msg.author.id;
 			pointsAwarded++;
-			score.set(msg.author.id, score.get(msg.author.id) + 1);
 			void msg.react('✅');
 
 			reacted = true;
@@ -215,23 +217,25 @@ async function playTrivia(
 		if (guessedTitle && !songNameFoundBy) {
 			songNameFoundBy = msg.author.id;
 			pointsAwarded++;
-			score.set(msg.author.id, score.get(msg.author.id) + 1);
 			void msg.react('✅');
 			reacted = true;
 		}
 
-		if (guessedSinger && guessedTitle && songSingerFoundBy === songNameFoundBy) {
-			if (pointsAwarded == 2) {
-				score.set(msg.author.id, score.get(msg.author.id) + 1); // Add an extra point for getting both correct
-				void interaction.channel.send(`<@${msg.author.id}> Correct! You earn **3 point**`);
-			}
+		if (songSingerFoundBy === songNameFoundBy) {
+			pointsAwarded++;
 		}
 
 		if (pointsAwarded > 0) {
 			score.set(msg.author.id, score.get(msg.author.id) + pointsAwarded);
-			void interaction.channel.send(
-				`<@${msg.author.id}> Correct! You earn **${pointsAwarded} point**`,
-			);
+			if (songSingerFoundBy && songNameFoundBy && songSingerFoundBy === songNameFoundBy) {
+				void interaction.channel.send(
+					`<@${msg.author.id}>You guessed both correct! You earn **${pointsAwarded} points** :tada:`,
+				);
+			} else {
+				void interaction.channel.send(
+					`<@${msg.author.id}> Correct! You earn **${pointsAwarded} point**`,
+				);
+			}
 		}
 
 		if (songNameFoundBy && songSingerFoundBy) {
