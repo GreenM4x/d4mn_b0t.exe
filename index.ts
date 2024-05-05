@@ -15,9 +15,9 @@ dotenv.config();
 const client = new ExtendedClient();
 const shoukaku = new Shoukaku(new Connectors.DiscordJS(client), [
 	{
-		name: 'YugiBot',
-		url: 'lavalink.lucask.dev',
-		auth: 'someSecurePW',
+		name: 'd34m_bot.exe',
+		url: process.env.LAVALINK_HOST,
+		auth: process.env.LAVALINK_PW,
 		secure: true,
 	},
 ]);

@@ -221,7 +221,7 @@ async function playTrivia(
 			reacted = true;
 		}
 
-		if (songSingerFoundBy === songNameFoundBy) {
+		if (songSingerFoundBy && songNameFoundBy && songSingerFoundBy === songNameFoundBy) {
 			pointsAwarded++;
 		}
 
