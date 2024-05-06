@@ -1,8 +1,8 @@
 version: "3"
 
 services:
-  greenbot:
-    container_name: greenbot
+  d34m_bot:
+    container_name: d34m_bot
     image: ghcr.io/greenm4x/d34m_bot.exe:latest
     # ports:
     #   - 9595:8080
