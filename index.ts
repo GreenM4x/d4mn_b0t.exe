@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL, fileURLToPath } from 'node:url';
 import { Events, type Interaction, Client } from 'discord.js';
 import dotenv from 'dotenv';
 import { Shoukaku, Connectors } from 'shoukaku';
@@ -23,7 +23,9 @@ const shoukaku = new Shoukaku(new Connectors.DiscordJS(client), [
 ]);
 client.music = shoukaku;
 
-const commandsPath = path.join(process.cwd(), '/dist/commands');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const commandsPath = path.join(__dirname, 'commands');
 
 async function loadCommands() {
 	const commandFiles = await fs.readdir(commandsPath);

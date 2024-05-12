@@ -13,6 +13,8 @@ export const GIFT_TIMEOUT = 60000;
 export const MAX_PURCHASES_PER_PACK_PER_DAY = 1;
 export const MAX_BOOSTERS_IN_SHOP = 5;
 
+// the RARITIES is just a reference of all rarities and their probability.
+// It represents the rarity beeing in a booster pack if the pool of cards of that booster pack includes the given rarity
 export const RARITIES = {
 	Common: 0.8889,
 	Rare: 0.1111,
