@@ -1,24 +1,36 @@
 {
 	"compilerOptions": {
+		// Enables compatibility between CommonJS and ES Modules.
 		"esModuleInterop": true,
+		// Skips checking the types of .d.ts files. This is important for performance, because otherwise all node_modules will be checked.
 		"skipLibCheck": true,
+		// Specifies the ECMAScript target version: "ES2022" is used for stability over "ESNext".
 		"target": "es2022",
+		// Allows to import .js
 		"allowJs": true,
+		// and .json files.
 		"resolveJsonModule": true,
+		// This option forces TypeScript to consider all files as modules. This helps to avoid 'cannot redeclare block-scoped variable' errors.
 		"moduleDetection": "force",
+		// This option prevents a few TS features which are unsafe when treating modules as isolated files.
 		"isolatedModules": true,
+		// This option forces you to use import type and export type
 		"verbatimModuleSyntax": true,
+		// Enables all strict type checking options.
 		"strict": true,
+		// Prevents you from accessing an array or object without first checking if it's defined. This is a great way to prevent runtime errors
 		"noUncheckedIndexedAccess": true,
+		// Makes the override keyword useful in classes.
 		"noImplicitOverride": true,
 
+		// Sets the module system for the runtime behavior and corresponds to how Node.js treats ECMAScript modules in its latest versions.
 		"module": "NodeNext",
+		// Specifies the output directory for compiled JavaScript files.
 		"outDir": "dist",
+		// Determines whether source maps should be generated.
 		"sourceMap": false,
 
+		// Specifies which library files TypeScript will include in the compilation.
 		"lib": ["es2022"]
-	},
-	"ts-node": {
-		"esm": true
 	}
 }
