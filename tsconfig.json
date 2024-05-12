@@ -1,16 +1,27 @@
 {
 	"compilerOptions": {
-		"module": "esnext",
-		"moduleResolution": "Node",
 		"esModuleInterop": true,
-		"allowSyntheticDefaultImports": true,
-		"target": "es6",
-		"noImplicitAny": true,
-		"sourceMap": true,
+		"skipLibCheck": true,
+		"target": "es2022",
+		"allowJs": true,
 		"resolveJsonModule": true,
-		"lib": ["esnext"],
-		"allowJs": true
+		"moduleDetection": "force", // neu
+		"isolatedModules": true, // neu
+		"verbatimModuleSyntax": true, //neu
+		"strict": true, // neu
+		"noUncheckedIndexedAccess": true, // neu
+		"noImplicitOverride": true, // neu
+
+		// "allowSyntheticDefaultImports": true, // ??
+		// "noImplicitAny": true,
+
+		"module": "Preserve",
+		"sourceMap": true,
+		"lib": ["es2022"]
 	},
 	"exclude": ["node_modules", "dist"],
-	"include": ["./**/*.ts"]
+	// "include": ["./**/*.ts"],
+	"ts-node": {
+		"transpileOnly": true
+	}
 }

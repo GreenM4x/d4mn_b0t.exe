@@ -9,7 +9,7 @@ export function getRandom<T>(arr: T[], n: number): T[] {
 	const taken = new Array(len);
 	while (n--) {
 		const x = Math.floor(Math.random() * len);
-		result[n] = arr[x in taken ? taken[x] : x];
+		result[n] = arr[x in taken ? taken[x] : x] as T;
 		taken[x] = --len in taken ? taken[len] : len;
 	}
 	return result;
@@ -27,8 +27,8 @@ export const normalizeValue = (value: string): string =>
 export const capitalizeWords = (str: string): string =>
 	str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase());
 
-export const getLeaderBoard = (arr: LeaderBoardItem[]): string | undefined => {
-	if (!arr || !arr.length) return;
+export const getLeaderBoard = (arr: LeaderBoardItem[]) => {
+	if (!arr || !arr.length) return null;
 	arr.sort((a, b) => b[1] - a[1]);
 
 	let leaderBoard = '__**LEADERBOARD**__ \n\n';

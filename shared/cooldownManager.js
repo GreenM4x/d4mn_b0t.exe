@@ -40,9 +40,4 @@ function remainingCooldown(userId, command) {
 	return remainingTime > 0 ? formattedTime : '0s';
 }
 
-module.exports = {
-	check,
-	add,
-	remove,
-	remainingCooldown,
-};
+export { check, add, remove, remainingCooldown };

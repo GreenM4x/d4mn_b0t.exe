@@ -1,21 +1,19 @@
-exports.CARDS_PER_PAGE = 4;
+export const CARDS_PER_PAGE = 4;
 
-exports.BINDER_TIMEOUT = 60000;
-exports.BINDER_COMMAND_COOLDOWN = 60000;
+export const BINDER_TIMEOUT = 60000;
+export const BINDER_COMMAND_COOLDOWN = 60000;
 
-exports.TRADE_COOLDOWN = 120000;
+export const TRADE_COOLDOWN = 120000;
 
-exports.DRAW_COMMAND_COOLDOWN = 900000;
-exports.DRAW_TIMEOUT = 30000;
+export const DRAW_COMMAND_COOLDOWN = 900000;
+export const DRAW_TIMEOUT = 30000;
 
-exports.GIFT_TIMEOUT = 60000;
+export const GIFT_TIMEOUT = 60000;
 
-exports.MAX_PURCHASES_PER_PACK_PER_DAY = 1;
-exports.MAX_BOOSTERS_IN_SHOP = 5;
+export const MAX_PURCHASES_PER_PACK_PER_DAY = 1;
+export const MAX_BOOSTERS_IN_SHOP = 5;
 
-// the RARITIES is just a reference of all rarities and their probability.
-// It represents the rarity beeing in a booster pack if the pool of cards of that booster pack includes the given rarity
-exports.RARITIES = {
+export const RARITIES = {
 	Common: 0.8889,
 	Rare: 0.1111,
 	'Super Rare': 0.2,

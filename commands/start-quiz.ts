@@ -1,5 +1,11 @@
-import { SlashCommandBuilder, EmbedBuilder } from '@discordjs/builders';
-import { ChatInputCommandInteraction, CacheType, GuildMember } from 'discord.js';
+import {
+	type ChatInputCommandInteraction,
+	type CacheType,
+	type GuildMember,
+	type GuildChannel,
+	SlashCommandBuilder,
+	EmbedBuilder,
+} from 'discord.js';
 import * as fs from 'fs';
 import {
 	getRandom,
@@ -7,8 +13,9 @@ import {
 	normalizeValue,
 	capitalizeWords,
 } from '../shared/music/utils.js';
-import { Player, Track, TrackResult } from 'shoukaku';
+import type { Player, Track, TrackResult } from 'shoukaku';
 import ExtendedClient from '../shared/music/ExtendedClient.js';
+import type { Trivia } from './stop-quiz.js';
 
 type Song = {
 	title: string;
@@ -18,7 +25,7 @@ type Song = {
 
 const TIME_BETWEEN_SONGS = 2000;
 
-export const data = new SlashCommandBuilder()
+const data = new SlashCommandBuilder()
 	.setName('start-quiz')
 	.setDescription('Better than MEE6')
 	.addIntegerOption((option) =>
@@ -28,12 +35,19 @@ export const data = new SlashCommandBuilder()
 			.setRequired(false),
 	);
 
-export async function execute(interaction: ChatInputCommandInteraction<CacheType>): Promise<void> {
+async function execute(interaction: ChatInputCommandInteraction<CacheType>): Promise<void> {
 	await interaction.deferReply();
 	const client = interaction.client as ExtendedClient;
 	const guildId = interaction.guildId;
+
+	if (!guildId) {
+		await interaction.followUp('This command can only be used in a server.');
+		return;
+	}
+
 	const guild = client.guilds.cache.get(guildId);
-	const member = guild.members.cache.get(interaction.user.id);
+
+	const member = guild?.members.cache.get(interaction.user.id);
 	const voiceChannel = member?.voice.channelId;
 	if (!voiceChannel) {
 		await interaction.followUp("You're not in a voice channel!");
@@ -41,7 +55,7 @@ export async function execute(interaction: ChatInputCommandInteraction<CacheType
 	}
 
 	const numberOfSongs = interaction.options.getInteger('number_of_songs') || 15;
-	if (client.music.players.get(guildId) && client.triviaMap.get(guildId)) {
+	if (client.music?.players.get(guildId) && client.triviaMap.get(guildId)) {
 		await interaction.followUp('Wait until the current music quiz ends');
 		return;
 	}
@@ -51,7 +65,7 @@ export async function execute(interaction: ChatInputCommandInteraction<CacheType
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 	const songsArray = getRandom<Song>(JSON.parse(jsonSongs), numberOfSongs);
 
-	const player = await client.music.joinVoiceChannel({
+	const player = await client.music?.joinVoiceChannel({
 		guildId: guildId,
 		channelId: voiceChannel,
 		shardId: 0,
@@ -76,10 +90,15 @@ You can type \`skip\` to vote for passing a song.\n
 		);
 	await interaction.followUp({ embeds: [startTriviaEmbed] });
 
+	if (!player) {
+		await interaction.followUp('Failed to join voice channel.');
+		return;
+	}
+
 	await playCountdownTrack(player);
 	const tracks: Track[] = [];
 	for (const song of songsArray) {
-		const result = (await player.node.rest.resolve(song.url)) as TrackResult;
+		const result = (await player?.node.rest.resolve(song.url)) as TrackResult;
 		if (!result.data) {
 			console.log('No tracks found for:', song.url);
 			continue;
@@ -96,7 +115,7 @@ You can type \`skip\` to vote for passing a song.\n
 	const membersInChannel = (interaction.member as GuildMember).voice.channel?.members;
 	if (!membersInChannel) {
 		await interaction.followUp('No members in the voice channel 🙁. Leaving...');
-		void client.music.leaveVoiceChannel(guildId);
+		void client.music?.leaveVoiceChannel(guildId);
 		client.triviaMap.delete(guildId);
 		return;
 	}
@@ -116,7 +135,7 @@ async function playCountdown(
 	const client = interaction.client as ExtendedClient;
 	let countdown = 11; // 10 seconds countdown
 	while (countdown > 0) {
-		if (!client.quizActive[interaction.guildId]) {
+		if (interaction.guildId && !client.quizActive[interaction.guildId]) {
 			console.log('Countdown halted.');
 			return false;
 		}
@@ -131,10 +150,7 @@ async function playCountdown(
 
 async function playCountdownTrack(player: Player) {
 	await player.playTrack({
-		track: {
-			encoded:
-				'QAAA0AMANDEwIFNlY29uZCBDb3VudERvd24gVGltZXIgV2l0aCBWb2ljZSBUbyBTdGFydCBBIFNob3cADlJhaW5ib3cgVGltZXJzAAAAAAAAxzgAC0hfYkIwc0FxTE5nAAEAK2h0dHBzOi8vd3d3LnlvdXR1YmUuY29tL3dhdGNoP3Y9SF9iQjBzQXFMTmcBADBodHRwczovL2kueXRpbWcuY29tL3ZpL0hfYkIwc0FxTE5nL21xZGVmYXVsdC5qcGcAAAd5b3V0dWJlAAAAAAAAAAA=',
-		},
+		track: 'QAAA0AMANDEwIFNlY29uZCBDb3VudERvd24gVGltZXIgV2l0aCBWb2ljZSBUbyBTdGFydCBBIFNob3cADlJhaW5ib3cgVGltZXJzAAAAAAAAxzgAC0hfYkIwc0FxTE5nAAEAK2h0dHBzOi8vd3d3LnlvdXR1YmUuY29tL3dhdGNoP3Y9SF9iQjBzQXFMTmcBADBodHRwczovL2kueXRpbWcuY29tL3ZpL0hfYkIwc0FxTE5nL21xZGVmYXVsdC5qcGcAAAd5b3V0dWJlAAAAAAAAAAA=',
 	});
 	await player.seekTo(19000);
 	await player.setGlobalVolume(80);
@@ -155,44 +171,39 @@ async function playTrivia(
 			.setColor(6345206)
 			.setTitle('Music Quiz Finished!')
 			.setDescription(getLeaderBoard(Array.from(score.entries())));
-		await interaction.channel.send({ embeds: [finalEmbed] });
-		void client.music.leaveVoiceChannel(player.guildId);
-		client.triviaMap.delete(interaction.channel.guildId);
+		await interaction.channel?.send({ embeds: [finalEmbed] });
+		void client.music?.leaveVoiceChannel(player.guildId);
+		client.triviaMap.delete((interaction.channel as GuildChannel).guildId);
 		return;
 	}
 
 	const currentTrack = tracks[index];
-	const trackLength = currentTrack.info?.length;
+	const trackLength = currentTrack?.info?.length ?? 5000;
 	const minStart = 5000;
 	const maxStart = trackLength - 35000;
-	if (!trackLength || maxStart <= minStart) {
+	if (!trackLength || maxStart <= minStart || !currentTrack?.encoded) {
 		void playTrivia(interaction, player, songsArray, score, tracks, index + 1);
 		return;
 	}
 	const randomStart = Math.floor(Math.random() * (maxStart - minStart + 1)) + minStart;
-	await player.playTrack({ track: { encoded: currentTrack.encoded } });
+	await player.playTrack({ track: currentTrack.encoded });
 	console.log('Playing track:', currentTrack.info?.title + ' - ' + currentTrack.info?.author);
 	await player.seekTo(randomStart);
 
-	let songNameFoundBy: string = null;
-	let songSingerFoundBy: string = null;
+	let songNameFoundBy: string | null = null;
+	let songSingerFoundBy: string | null = null;
 	const skippedArray: string[] = [];
 
-	const collector = interaction.channel.createMessageCollector({ time: 30000 });
-	client.triviaMap.set(interaction.channel.guildId, {
-		collector,
-		wasTriviaEndCalled: false,
-	});
-
-	const title = normalizeValue(songsArray[index].title);
-	const singers: string[] = songsArray[index].singers.map(normalizeValue);
-	collector.on('collect', (msg) => {
+	const collector = interaction.channel?.createMessageCollector({ time: 30000 });
+	const title = normalizeValue(songsArray?.[index]?.title ?? '');
+	const singers: string[] | undefined = songsArray[index]?.singers.map(normalizeValue);
+	collector?.on('collect', (msg) => {
 		if (!score.has(msg.author.id)) return;
 		const guess: string = normalizeValue(msg.content);
 
 		if (guess === 'skip' && !skippedArray.includes(msg.author.id)) {
 			skippedArray.push(msg.author.id);
-			void interaction.channel.send(
+			void interaction.channel?.send(
 				`<@${msg.author.id}> voted to skip the song. ${skippedArray.length}/${score.size} votes.`,
 			);
 			if (skippedArray.length > score.size * 0.6) {
@@ -201,7 +212,7 @@ async function playTrivia(
 			return;
 		}
 
-		const guessedSinger = singers.some((singer) => guess.includes(singer));
+		const guessedSinger = singers?.some((singer) => guess.includes(singer));
 		const guessedTitle = guess.includes(title);
 		let pointsAwarded = 0;
 		let reacted = false;
@@ -226,13 +237,14 @@ async function playTrivia(
 		}
 
 		if (pointsAwarded > 0) {
-			score.set(msg.author.id, score.get(msg.author.id) + pointsAwarded);
+			const currentScore = score.get(msg.author.id) ?? 0;
+			score.set(msg.author.id, currentScore + pointsAwarded);
 			if (songSingerFoundBy && songNameFoundBy && songSingerFoundBy === songNameFoundBy) {
-				void interaction.channel.send(
+				void interaction.channel?.send(
 					`<@${msg.author.id}>You guessed both correct! You earn **${pointsAwarded} points** :tada:`,
 				);
 			} else {
-				void interaction.channel.send(
+				void interaction.channel?.send(
 					`<@${msg.author.id}> Correct! You earn **${pointsAwarded} point**`,
 				);
 			}
@@ -246,24 +258,26 @@ async function playTrivia(
 		}
 	});
 
-	collector.on('end', async (_, reason) => {
-		const guildId = interaction.channel.guildId;
-		const trivia = client.triviaMap.get(guildId);
-		if (trivia.wasTriviaEndCalled) {
+	collector?.on('end', async (_, reason) => {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const guildId = (interaction.channel as GuildChannel).guildId;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const trivia: Trivia = client.triviaMap.get(guildId);
+		if (trivia?.wasTriviaEndCalled) {
 			client.triviaMap.delete(guildId);
 			return;
 		}
 
 		if (reason === 'time' || reason === 'skipped' || reason === 'guessed') {
-			const songInfo = `${capitalizeWords(songsArray[index].singers.join(', '))} - ${capitalizeWords(songsArray[index].title)}`;
+			const songInfo = `${capitalizeWords(songsArray[index]?.singers?.join(', ') ?? '')} - ${capitalizeWords(songsArray[index]?.title ?? '')}`;
 			const resultEmbed = new EmbedBuilder()
 				.setColor(6345206)
 				.setTitle(`It was: ${songInfo}`)
-				.setThumbnail(currentTrack.info?.artworkUrl)
+				.setThumbnail(currentTrack.info?.artworkUrl ?? '')
 				.setDescription(getLeaderBoard(Array.from(score.entries())))
 				.setFooter({ text: `Music Quiz - track ${index + 1}/${songsArray.length}` });
 
-			void interaction.channel.send({ embeds: [resultEmbed] });
+			void interaction.channel?.send({ embeds: [resultEmbed] });
 		}
 
 		if (reason !== 'skipped' || songSingerFoundBy || songNameFoundBy) {
@@ -271,8 +285,10 @@ async function playTrivia(
 			await new Promise((resolve) => setTimeout(resolve, TIME_BETWEEN_SONGS));
 			void playTrivia(interaction, player, songsArray, score, tracks, index + 1);
 		} else {
-			void interaction.channel.send('Song skipped');
+			void interaction.channel?.send('Song skipped');
 			void playTrivia(interaction, player, songsArray, score, tracks, index + 1);
 		}
 	});
 }
+
+export { data, execute };

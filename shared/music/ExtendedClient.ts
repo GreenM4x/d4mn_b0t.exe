@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Client, GatewayIntentBits, Collection, MessageCollector } from 'discord.js';
 import { Shoukaku } from 'shoukaku';
@@ -8,11 +9,16 @@ export type TriviaMap = {
 };
 
 class ExtendedClient extends Client {
+	// @ts-expect-error
 	music: Shoukaku | undefined;
+	// @ts-expect-error
 	queueHistory: Map<string, any>;
+	// @ts-expect-error
 	triviaMap: Map<string, any>;
+	// @ts-expect-error
 	commands: Collection<string, any>;
-	quizActive: Record<string, boolean>;
+	// @ts-expect-error
+	quizActive!: Record<string, boolean>;
 
 	constructor() {
 		super({

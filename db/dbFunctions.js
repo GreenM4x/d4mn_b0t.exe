@@ -1,4 +1,4 @@
-const fs = require('fs');
+import fs from 'fs';
 
 function readDb(dbName = 'db.json') {
 	// read JSON object from file
@@ -38,17 +38,18 @@ function getUserData(userId, dbName = 'db.json') {
 function writeDb(obj, dbName = 'db.json') {
 	if (!obj) return console.log('Please provide data to save');
 	try {
-		var data = require('../db.json');
-		if (data.some((item) => item.userId === obj.userId)) {
-			data[data.findIndex((x) => x.userId === obj.userId)] = obj;
+		const data = JSON.parse(fs.readFileSync(dbName, 'utf8'));
+		const index = data.findIndex((item) => item.userId === obj.userId);
+		if (index !== -1) {
+			data[index] = obj;
 		} else {
 			data.push(obj);
 		}
-		fs.writeFileSync(dbName, JSON.stringify(data)); //overwrites current data
+		fs.writeFileSync(dbName, JSON.stringify(data)); // overwrites current data
 		return;
 	} catch (err) {
 		return console.log('FAILED TO WRITE');
 	}
 }
 
-module.exports = { readDb, writeDb, getUserData };
+export { readDb, writeDb, getUserData };
