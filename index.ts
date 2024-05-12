@@ -1,15 +1,17 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import { pathToFileURL, fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
 import {
+	ChatInputCommandInteraction,
+	Client,
 	Events,
 	type Interaction,
-	Client,
-	ChatInputCommandInteraction,
 	SlashCommandBuilder,
 } from 'discord.js';
 import dotenv from 'dotenv';
-import { Shoukaku, Connectors } from 'shoukaku';
+import { Connectors, Shoukaku } from 'shoukaku';
+
 import ExtendedClient from './shared/music/ExtendedClient.js';
 
 type CustomCommand = {

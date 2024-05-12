@@ -1,4 +1,5 @@
-import { SlashCommandBuilder, type ChatInputCommandInteraction, type CacheType } from 'discord.js';
+import { type CacheType, type ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
+
 import ExtendedClient from '../shared/music/ExtendedClient.js';
 
 export interface Trivia {

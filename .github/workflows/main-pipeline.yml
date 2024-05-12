@@ -2,104 +2,103 @@
 name: Unstable release
 
 concurrency:
-  group: ${{ github.ref }}
-  cancel-in-progress: true
+    group: ${{ github.ref }}
+    cancel-in-progress: true
 
 on:
-  push:
-    branches: ["main"]
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: "Branch to build and deploy from"
-        required: true
-        default: "main"
+    push:
+        branches: ['main']
+    workflow_dispatch:
+        inputs:
+            branch:
+                description: 'Branch to build and deploy from'
+                required: true
+                default: 'main'
 
 env:
-  DOCKER_IMAGE: ghcr.io/greenm4x/d34m_bot.exe
+    DOCKER_IMAGE: ghcr.io/greenm4x/d34m_bot.exe
 
 jobs:
-  docker-build-and-push:
-    runs-on: ubuntu-latest
-    steps:
-      # Access Repository in action
-      - name: Checkout ⬇️
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.inputs.branch }}
+    docker-build-and-push:
+        runs-on: ubuntu-latest
+        steps:
+            # Access Repository in action
+            - name: Checkout ⬇️
+              uses: actions/checkout@v4
+              with:
+                  ref: ${{ github.event.inputs.branch }}
 
-      - name: Get current date ⌛
-        id: date
-        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+            - name: Get current date ⌛
+              id: date
+              run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
-      - name: Get commit hash ⚙️
-        id: sha
-        run: echo "sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+            - name: Get commit hash ⚙️
+              id: sha
+              run: echo "sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
 
-      # action can be useful if you want to add emulation support with QEMU
-      # to be able to build against more platforms.
-      - name: Configure QEMU ⚙️
-        uses: docker/setup-qemu-action@v3
-      # # action will create and boot a builder using by default the docker-container builder driver.
-      # # This is not required but recommended using it to be able to build multi-platform images, export cache, etc.
-      - name: Configure Docker Buildx ⚙️
-        uses: docker/setup-buildx-action@v3
+            # action can be useful if you want to add emulation support with QEMU
+            # to be able to build against more platforms.
+            - name: Configure QEMU ⚙️
+              uses: docker/setup-qemu-action@v3
+            # # action will create and boot a builder using by default the docker-container builder driver.
+            # # This is not required but recommended using it to be able to build multi-platform images, export cache, etc.
+            - name: Configure Docker Buildx ⚙️
+              uses: docker/setup-buildx-action@v3
 
-      - name: Login to Github Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+            - name: Login to Github Container Registry
+              uses: docker/login-action@v3
+              with:
+                  registry: ghcr.io
+                  username: ${{ github.repository_owner }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
 
+            - name: Extract metadata (tags, labels) for Docker
+              id: meta
+              uses: docker/metadata-action@v5
+              with:
+                  images: ${{ env.DOCKER_IMAGE }}
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.DOCKER_IMAGE }}
+            - name: Build and push Docker images 🛠️
+              uses: docker/build-push-action@v5
+              with:
+                  tags: |
+                      ${{ env.DOCKER_IMAGE }}:latest
+                      ${{ env.DOCKER_IMAGE }}:main
+                      ${{ env.DOCKER_IMAGE }}:main.${{ steps.date.outputs.date }}.${{ steps.sha.outputs.sha }}
+                      ${{ steps.meta.outputs.tags }}
+                  labels: ${{ steps.meta.outputs.labels }}
+                  platforms: linux/amd64
+                  push: true
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
 
-      - name: Build and push Docker images 🛠️
-        uses: docker/build-push-action@v5
-        with:
-          tags: |
-            ${{ env.DOCKER_IMAGE }}:latest
-            ${{ env.DOCKER_IMAGE }}:main
-            ${{ env.DOCKER_IMAGE }}:main.${{ steps.date.outputs.date }}.${{ steps.sha.outputs.sha }}
-            ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/amd64
-          push: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+    run-on-pi:
+        runs-on: self-hosted # Self hosted Pi
+        # environment: production
+        needs: docker-build-and-push
+        steps:
+            # Checkout repo to get docker compose file (can maybe provided from previous job later)
+            - name: Checkout
+              uses: actions/checkout@v4
 
-  run-on-pi:
-    runs-on: self-hosted # Self hosted Pi
-    # environment: production
-    needs: docker-build-and-push
-    steps:
-      # Checkout repo to get docker compose file (can maybe provided from previous job later)
-      - name: Checkout
-        uses: actions/checkout@v4
+            - name: Login to Github Container Registry
+              uses: docker/login-action@v3
+              with:
+                  registry: ghcr.io
+                  username: ${{ github.repository_owner }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Login to Github Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+            - name: Pull latest docker image
+              run: docker pull ${{ env.DOCKER_IMAGE }}:latest
 
-      - name: Pull latest docker image
-        run: docker pull ${{ env.DOCKER_IMAGE }}:latest
+            - name: Run docker image
+              run: docker compose up -d --build
+              env:
+                  DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+                  CLIENT_ID: ${{ secrets.CLIENT_ID }}
+                  GUILD_ID: ${{ secrets.GUILD_ID }}
+                  LAVALINK_HOST: ${{ secrets.LAVALINK_HOST }}
+                  LAVALINK_PW: ${{ secrets.LAVALINK_PW }}
 
-      - name: Run docker image
-        run: docker compose up -d --build
-        env:
-          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
-          CLIENT_ID: ${{ secrets.CLIENT_ID }}
-          GUILD_ID: ${{ secrets.GUILD_ID }}
-          LAVALINK_HOST: ${{ secrets.LAVALINK_HOST }}
-          LAVALINK_PW: ${{ secrets.LAVALINK_PW }}
-
-      - name: Remove old unused image
-        run: docker image prune -a -f --filter "label=name=greenbot"
+            - name: Remove old unused image
+              run: docker image prune -a -f --filter "label=name=greenbot"

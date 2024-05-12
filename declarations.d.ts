@@ -1,5 +1,6 @@
-import { Shoukaku } from 'shoukaku';
 import { Collection } from 'discord.js';
+import { Shoukaku } from 'shoukaku';
+
 import { TriviaMap } from './shared/music/ExtendedClient.js';
 
 declare module 'discord.js' {

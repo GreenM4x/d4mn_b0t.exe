@@ -1,6 +1,7 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { readDb } from '../db/dbFunctions.js';
 import fs from 'fs';
+
+import { readDb } from '../db/dbFunctions.js';
 
 const data = new SlashCommandBuilder()
 	.setName('delete')

@@ -1,20 +1,21 @@
 import {
-	type ChatInputCommandInteraction,
 	type CacheType,
-	type GuildMember,
-	type GuildChannel,
-	SlashCommandBuilder,
+	type ChatInputCommandInteraction,
 	EmbedBuilder,
+	type GuildChannel,
+	type GuildMember,
+	SlashCommandBuilder,
 } from 'discord.js';
 import * as fs from 'fs';
-import {
-	getRandom,
-	getLeaderBoard,
-	normalizeValue,
-	capitalizeWords,
-} from '../shared/music/utils.js';
 import type { Player, Track, TrackResult } from 'shoukaku';
+
 import ExtendedClient from '../shared/music/ExtendedClient.js';
+import {
+	capitalizeWords,
+	getLeaderBoard,
+	getRandom,
+	normalizeValue,
+} from '../shared/music/utils.js';
 
 type Song = {
 	title: string;

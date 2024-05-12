@@ -1,27 +1,27 @@
-version: "3"
+version: '3'
 
 services:
-  d34m_bot:
-    container_name: d34m_bot
-    image: ghcr.io/greenm4x/d34m_bot.exe:latest
-    # ports:
-    #   - 9595:8080
-    environment:
-      - DISCORD_TOKEN=${DISCORD_TOKEN}
-      - CLIENT_ID=${CLIENT_ID}
-      - GUILD_ID=${GUILD_ID}
-      - LAVALINK_HOST=${LAVALINK_HOST}
-      - LAVALINK_PW=${LAVALINK_PW}
-    restart: unless-stopped
-    volumes:
-      - ../database/db.json:/GreenBot/db.json:rw
-      - ../database/cardInfo.json:/GreenBot/db/cardInfo.json:rw
-      - ../database/images:/GreenBot/db/images:rw
-      - ../database/booster_packs:/GreenBot/db/booster_packs:rw
-    networks:
-      - proxy
+    d34m_bot:
+        container_name: d34m_bot
+        image: ghcr.io/greenm4x/d34m_bot.exe:latest
+        # ports:
+        #   - 9595:8080
+        environment:
+            - DISCORD_TOKEN=${DISCORD_TOKEN}
+            - CLIENT_ID=${CLIENT_ID}
+            - GUILD_ID=${GUILD_ID}
+            - LAVALINK_HOST=${LAVALINK_HOST}
+            - LAVALINK_PW=${LAVALINK_PW}
+        restart: unless-stopped
+        volumes:
+            - ../database/db.json:/GreenBot/db.json:rw
+            - ../database/cardInfo.json:/GreenBot/db/cardInfo.json:rw
+            - ../database/images:/GreenBot/db/images:rw
+            - ../database/booster_packs:/GreenBot/db/booster_packs:rw
+        networks:
+            - proxy
 
 networks:
-  proxy:
-    driver: bridge
-    external: true
+    proxy:
+        driver: bridge
+        external: true

@@ -1,16 +1,17 @@
 import {
+	ActionRowBuilder,
+	AttachmentBuilder,
 	ButtonBuilder,
 	ButtonStyle,
-	ActionRowBuilder,
 	EmbedBuilder,
-	AttachmentBuilder,
 	SlashCommandBuilder,
 } from 'discord.js';
+
 import { getUserData } from '../db/dbFunctions.js';
-import { CARDS_PER_PAGE, BINDER_TIMEOUT, BINDER_COMMAND_COOLDOWN } from '../shared/variables.js';
 import { getCardData } from '../shared/card.js';
 import { add, check, remainingCooldown } from '../shared/cooldownManager.js';
-import { createFilterMenu, filterCards, sortCards, createSortMenu } from '../shared/utils.js';
+import { createFilterMenu, createSortMenu, filterCards, sortCards } from '../shared/utils.js';
+import { BINDER_COMMAND_COOLDOWN, BINDER_TIMEOUT, CARDS_PER_PAGE } from '../shared/variables.js';
 
 const COMMAND_NAME = 'binder';
 const SOME_RANDOM_URL = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';

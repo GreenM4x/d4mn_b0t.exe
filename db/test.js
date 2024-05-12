@@ -1,5 +1,5 @@
-import { writeDb } from './dbFunctions.js';
 import data from '../db.json';
+import { writeDb } from './dbFunctions.js';
 
 const cardId = 777;
 const CardArray = data[2].userCardId;
