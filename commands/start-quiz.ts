@@ -15,7 +15,6 @@ import {
 } from '../shared/music/utils.js';
 import type { Player, Track, TrackResult } from 'shoukaku';
 import ExtendedClient from '../shared/music/ExtendedClient.js';
-import type { Trivia } from './stop-quiz.js';
 
 type Song = {
 	title: string;
@@ -62,8 +61,7 @@ async function execute(interaction: ChatInputCommandInteraction<CacheType>): Pro
 
 	const songPath = './db/music/3k-songs.json';
 	const jsonSongs = fs.readFileSync(songPath, 'utf-8');
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-	const songsArray = getRandom<Song>(JSON.parse(jsonSongs), numberOfSongs);
+	const songsArray = getRandom(JSON.parse(jsonSongs) as Song[], numberOfSongs);
 
 	const player = await client.music?.joinVoiceChannel({
 		guildId: guildId,
@@ -259,10 +257,8 @@ async function playTrivia(
 	});
 
 	collector?.on('end', async (_, reason) => {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const guildId = (interaction.channel as GuildChannel).guildId;
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const trivia: Trivia = client.triviaMap.get(guildId);
+		const trivia = client.triviaMap.get(guildId);
 		if (trivia?.wasTriviaEndCalled) {
 			client.triviaMap.delete(guildId);
 			return;

@@ -10,7 +10,7 @@ import {
 import { getUserData, writeDb } from '../db/dbFunctions.js';
 import { getCardData } from '../shared/card.js';
 import { TRADE_COOLDOWN } from '../shared/variables.js';
-import { add, check, remainingCooldown } from '../shared/cooldownManager.js';
+import { add, check, remainingCooldown, remove } from '../shared/cooldownManager.js';
 
 const COMMAND_NAME = 'trade';
 const SOME_RANDOM_URL = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
@@ -251,7 +251,7 @@ async function execute(interaction) {
 				await interaction.followUp({
 					content: `${interaction.user.username} successfully traded **${userCardToTrade.name}** with ${targetUser.username}'s **${targetCardToTrade.name}**.`,
 				});
-				cooldownManager.remove(interaction.user.id, COMMAND_NAME);
+				remove(interaction.user.id, COMMAND_NAME);
 
 				collector.stop();
 			}
@@ -260,7 +260,7 @@ async function execute(interaction) {
 			await interaction.followUp({
 				content: 'Trade canceled.',
 			});
-			cooldownManager.remove(interaction.user.id, COMMAND_NAME);
+			remove(interaction.user.id, COMMAND_NAME);
 			collector.stop();
 		}
 	});
@@ -272,7 +272,7 @@ async function execute(interaction) {
 				content: 'Trade session timed out. No trade occurred.',
 			});
 		}
-		cooldownManager.remove(interaction.user.id, COMMAND_NAME);
+		remove(interaction.user.id, COMMAND_NAME);
 	});
 
 	async function disableTradeEmbed() {

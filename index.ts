@@ -1,14 +1,21 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
-import { Events, type Interaction, Client } from 'discord.js';
+import {
+	Events,
+	type Interaction,
+	Client,
+	ChatInputCommandInteraction,
+	SlashCommandBuilder,
+} from 'discord.js';
 import dotenv from 'dotenv';
 import { Shoukaku, Connectors } from 'shoukaku';
 import ExtendedClient from './shared/music/ExtendedClient.js';
+
+type CustomCommand = {
+	data: SlashCommandBuilder;
+	execute: (interaction: ChatInputCommandInteraction) => Promise<void>;
+};
 
 dotenv.config();
 
@@ -33,7 +40,7 @@ async function loadCommands() {
 		const filePath = path.join(commandsPath, file);
 		const fileURL = pathToFileURL(filePath).href;
 		try {
-			const command = await import(fileURL);
+			const command = (await import(fileURL)) as CustomCommand;
 			if ('data' in command && 'execute' in command) {
 				client.commands.set(command.data.name, command);
 			} else {
@@ -60,7 +67,7 @@ void client.login(process.env.GITHUB_TOKEN);
 
 client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 	if (!interaction.isChatInputCommand()) return;
-	const command = client.commands.get(interaction.commandName);
+	const command = client.commands.get(interaction.commandName) as CustomCommand;
 
 	if (!command) {
 		console.error(`No command matching ${interaction.commandName} was found.`);

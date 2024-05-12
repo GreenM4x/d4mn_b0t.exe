@@ -1,18 +1,12 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 type LeaderBoardItem = [string, number];
 
 export function getRandom<T>(arr: T[], n: number): T[] {
 	if (n > arr.length) throw new RangeError('getRandom: more elements taken than available!');
-	const result = new Array<T>(n);
-	let len = arr.length;
-	const taken = new Array(len);
-	while (n--) {
-		const x = Math.floor(Math.random() * len);
-		result[n] = arr[x in taken ? taken[x] : x] as T;
-		taken[x] = --len in taken ? taken[len] : len;
-	}
-	return result;
+	return arr
+		.map((value) => ({ value, sort: Math.random() })) // add random sort value
+		.sort((a, b) => a.sort - b.sort) // sort by random value
+		.slice(0, n) // take n values
+		.map((pair) => pair.value); // only keep the value
 }
 
 export const normalizeValue = (value: string): string =>
