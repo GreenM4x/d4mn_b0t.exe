@@ -1,16 +1,17 @@
 import {
 	ActionRowBuilder,
-	StringSelectMenuBuilder,
 	AttachmentBuilder,
-	EmbedBuilder,
 	ButtonBuilder,
 	ButtonStyle,
+	EmbedBuilder,
 	SlashCommandBuilder,
+	StringSelectMenuBuilder,
 } from 'discord.js';
+
 import { getUserData, writeDb } from '../db/dbFunctions.js';
 import { getCardData } from '../shared/card.js';
-import { TRADE_COOLDOWN } from '../shared/variables.js';
 import { add, check, remainingCooldown, remove } from '../shared/cooldownManager.js';
+import { TRADE_COOLDOWN } from '../shared/variables.js';
 
 const COMMAND_NAME = 'trade';
 const SOME_RANDOM_URL = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';

@@ -1,6 +1,7 @@
 import { AttachmentBuilder, SlashCommandBuilder } from 'discord.js';
-import { getCardData, getColorForCardType } from '../shared/card.js';
+
 import { getUserData } from '../db/dbFunctions.js';
+import { getCardData, getColorForCardType } from '../shared/card.js';
 import { createEmbed } from '../shared/utils.js';
 
 const COMMAND_NAME = 'show';

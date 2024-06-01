@@ -1,8 +1,9 @@
-import { REST, Routes } from 'discord.js';
 import { readdir } from 'node:fs/promises';
-import { join, dirname } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+import { REST, Routes } from 'discord.js';
 import { config } from 'dotenv';
-import { pathToFileURL, fileURLToPath } from 'node:url';
 
 config(); // Load environment variables
 

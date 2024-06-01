@@ -1,15 +1,16 @@
 import {
-	SlashCommandBuilder,
 	ActionRowBuilder,
+	AttachmentBuilder,
 	ButtonBuilder,
 	ButtonStyle,
-	AttachmentBuilder,
+	SlashCommandBuilder,
 } from 'discord.js';
-import { writeDb, getUserData } from '../db/dbFunctions.js';
+
+import { getUserData, writeDb } from '../db/dbFunctions.js';
 import { getColorForCardType, getRandomCard } from '../shared/card.js';
-import { DRAW_COMMAND_COOLDOWN, DRAW_TIMEOUT } from '../shared/variables.js';
 import { add, check, remainingCooldown } from '../shared/cooldownManager.js';
 import { createEmbed } from '../shared/utils.js';
+import { DRAW_COMMAND_COOLDOWN, DRAW_TIMEOUT } from '../shared/variables.js';
 
 const COMMAND_NAME = 'draw';
 

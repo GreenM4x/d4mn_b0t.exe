@@ -1,12 +1,13 @@
 import {
-	SlashCommandBuilder,
-	ButtonBuilder,
 	ActionRowBuilder,
-	ButtonStyle,
 	AttachmentBuilder,
+	ButtonBuilder,
+	ButtonStyle,
+	SlashCommandBuilder,
 } from 'discord.js';
+
 import { getUserData, writeDb } from '../db/dbFunctions.js';
-import { getColorForCardType, getCardData } from '../shared/card.js';
+import { getCardData, getColorForCardType } from '../shared/card.js';
 import { createEmbed } from '../shared/utils.js';
 
 const data = new SlashCommandBuilder()

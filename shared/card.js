@@ -74,4 +74,4 @@ const getCardPrice = (cardDetails, rarity, packId = null) => {
 	return cardDetails.card_prices[0].cardmarket_price;
 };
 
-export { getCardData, getRandomCard, getColorForCardType };
+export { getCardData, getColorForCardType, getRandomCard };

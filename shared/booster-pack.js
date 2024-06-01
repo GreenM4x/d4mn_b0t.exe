@@ -1,7 +1,8 @@
-import { AttachmentBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle } from 'discord.js';
+import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+
 import { writeDb } from '../db/dbFunctions.js';
 import { getCardData, getColorForCardType } from './card.js';
-import { shuffle, createEmbed } from './utils.js';
+import { createEmbed, shuffle } from './utils.js';
 import { RARITIES } from './variables.js';
 
 const openBoosterPack = async (interaction, binder, pack) => {

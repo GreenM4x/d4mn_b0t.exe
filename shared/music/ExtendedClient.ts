@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, Collection, MessageCollector } from 'discord.js';
+import { Client, Collection, GatewayIntentBits, MessageCollector } from 'discord.js';
 
 export type TriviaMap = {
 	wasTriviaEndCalled: boolean;

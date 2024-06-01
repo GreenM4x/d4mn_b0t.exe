@@ -1,4 +1,5 @@
 import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
+
 import { getUserData } from '../db/dbFunctions.js';
 import { calculateBinderValue } from '../shared/utils.js';
 

@@ -1,19 +1,20 @@
-import fs from 'fs';
-import path from 'path';
 import {
-	SlashCommandBuilder,
 	ActionRowBuilder,
+	AttachmentBuilder,
 	ButtonBuilder,
 	ButtonStyle,
-	AttachmentBuilder,
+	SlashCommandBuilder,
 	StringSelectMenuBuilder,
 } from 'discord.js';
+import fs from 'fs';
+import path from 'path';
 import seedrandom from 'seedrandom';
-import { getUserData, writeDb } from '../db/dbFunctions.js';
-import { createEmbed } from '../shared/utils.js';
+
 import boosterPacksData from '../db/booster_packs/data.json' with { type: 'json' };
-import { MAX_PURCHASES_PER_PACK_PER_DAY, MAX_BOOSTERS_IN_SHOP } from '../shared/variables.js';
+import { getUserData, writeDb } from '../db/dbFunctions.js';
 import { openBoosterPack } from '../shared/booster-pack.js';
+import { createEmbed } from '../shared/utils.js';
+import { MAX_BOOSTERS_IN_SHOP, MAX_PURCHASES_PER_PACK_PER_DAY } from '../shared/variables.js';
 
 const data = new SlashCommandBuilder().setName('shop').setDescription('Buy and open booster packs');
 

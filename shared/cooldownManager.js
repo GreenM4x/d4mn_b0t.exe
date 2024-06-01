@@ -40,4 +40,4 @@ function remainingCooldown(userId, command) {
 	return remainingTime > 0 ? formattedTime : '0s';
 }
 
-export { check, add, remove, remainingCooldown };
+export { add, check, remainingCooldown, remove };

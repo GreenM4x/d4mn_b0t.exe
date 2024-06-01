@@ -52,4 +52,4 @@ function writeDb(obj, dbName = 'db.json') {
 	}
 }
 
-export { readDb, writeDb, getUserData };
+export { getUserData, readDb, writeDb };
