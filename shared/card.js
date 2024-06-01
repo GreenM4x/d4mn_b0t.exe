@@ -1,4 +1,4 @@
-const cardInfo = require('../db/cardInfo.json');
+import cardInfo from '../db/cardInfo.json' with { type: 'json' };
 
 const getCardData = (binderCard, packId = null) => {
 	if (!binderCard) return null;
@@ -74,6 +74,4 @@ const getCardPrice = (cardDetails, rarity, packId = null) => {
 	return cardDetails.card_prices[0].cardmarket_price;
 };
 
-exports.getCardData = getCardData;
-exports.getRandomCard = getRandomCard;
-exports.getColorForCardType = getColorForCardType;
+export { getCardData, getRandomCard, getColorForCardType };

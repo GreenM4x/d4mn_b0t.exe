@@ -1,9 +1,5 @@
-const {
-	EmbedBuilder,
-	StringSelectMenuOptionBuilder,
-	StringSelectMenuBuilder,
-} = require('discord.js');
-const { getCardData } = require('./card.cjs');
+import { EmbedBuilder, StringSelectMenuOptionBuilder, StringSelectMenuBuilder } from 'discord.js';
+import { getCardData } from './card.js';
 
 const createEmbed = ({
 	title,
@@ -151,10 +147,12 @@ const shuffle = (array) => {
 	}
 };
 
-exports.createEmbed = createEmbed;
-exports.createFilterMenu = createFilterMenu;
-exports.filterCards = filterCards;
-exports.calculateBinderValue = calculateBinderValue;
-exports.shuffle = shuffle;
-exports.createSortMenu = createSortMenu;
-exports.sortCards = sortCards;
+export {
+	createEmbed,
+	createFilterMenu,
+	filterCards,
+	calculateBinderValue,
+	shuffle,
+	createSortMenu,
+	sortCards,
+};

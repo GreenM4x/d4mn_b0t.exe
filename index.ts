@@ -1,14 +1,21 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import { pathToFileURL } from 'node:url';
-import { Events, Interaction, Client } from 'discord.js';
+import { pathToFileURL, fileURLToPath } from 'node:url';
+import {
+	Events,
+	type Interaction,
+	Client,
+	ChatInputCommandInteraction,
+	SlashCommandBuilder,
+} from 'discord.js';
 import dotenv from 'dotenv';
-import ExtendedClient from './shared/music/ExtendedClient';
 import { Shoukaku, Connectors } from 'shoukaku';
+import ExtendedClient from './shared/music/ExtendedClient.js';
+
+type CustomCommand = {
+	data: SlashCommandBuilder;
+	execute: (interaction: ChatInputCommandInteraction) => Promise<void>;
+};
 
 dotenv.config();
 
@@ -16,14 +23,16 @@ const client = new ExtendedClient();
 const shoukaku = new Shoukaku(new Connectors.DiscordJS(client), [
 	{
 		name: 'd34m_bot.exe',
-		url: process.env.LAVALINK_HOST,
-		auth: process.env.LAVALINK_PW,
+		url: process.env.LAVALINK_HOST || '',
+		auth: process.env.LAVALINK_PW || '',
 		secure: true,
 	},
 ]);
 client.music = shoukaku;
 
-const commandsPath = path.join(process.cwd(), 'commands');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const commandsPath = path.join(__dirname, 'commands');
 
 async function loadCommands() {
 	const commandFiles = await fs.readdir(commandsPath);
@@ -31,16 +40,14 @@ async function loadCommands() {
 		const filePath = path.join(commandsPath, file);
 		const fileURL = pathToFileURL(filePath).href;
 		try {
-			let command;
-			if (file.endsWith('.ts') || file.endsWith('.js') || file.endsWith('.cjs')) {
-				command = await import(fileURL);
-			}
-			if (command.default && 'data' in command.default && 'execute' in command.default) {
-				client.commands.set(command.default.data.name, command.default);
-			} else if (command.data && 'execute' in command) {
+			const command = (await import(fileURL)) as CustomCommand;
+			if ('data' in command && 'execute' in command) {
 				client.commands.set(command.data.name, command);
 			} else {
-				console.log(`[WARNING] The command at ${fileURL} is missing required properties.`);
+				console.log(
+					`[WARNING] The command at ${fileURL} is missing required properties.`,
+					command,
+				);
 			}
 		} catch (error) {
 			console.error(error);
@@ -53,14 +60,14 @@ void loadCommands();
 shoukaku.on('error', (_, error: Error) => console.error(error));
 
 client.once(Events.ClientReady, (c: Client) => {
-	console.log(`Ready! Logged in as ${c.user.tag}`);
+	console.log(`Ready! Logged in as ${c.user?.tag}`);
 });
 
 void client.login(process.env.GITHUB_TOKEN);
 
 client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 	if (!interaction.isChatInputCommand()) return;
-	const command = client.commands.get(interaction.commandName);
+	const command = client.commands.get(interaction.commandName) as CustomCommand;
 
 	if (!command) {
 		console.error(`No command matching ${interaction.commandName} was found.`);

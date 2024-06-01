@@ -1,16 +1,38 @@
 {
 	"compilerOptions": {
-		"module": "esnext",
-		"moduleResolution": "Node",
+		// Enables compatibility between CommonJS and ES Modules.
 		"esModuleInterop": true,
-		"allowSyntheticDefaultImports": true,
-		"target": "es6",
-		"noImplicitAny": true,
-		"sourceMap": true,
+		// Skips checking the types of .d.ts files. This is important for performance, because otherwise all node_modules will be checked.
+		"skipLibCheck": true,
+		// The version of JavaScript you're targeting. es2022 recommended over esnext for stability.
+		"target": "es2022",
+		// Allows to import .js
+		"allowJs": true,
+		// and .json files.
 		"resolveJsonModule": true,
-		"lib": ["esnext"],
-		"allowJs": true
+		// This option forces TypeScript to consider all files as modules. This helps to avoid 'cannot redeclare block-scoped variable' errors.
+		"moduleDetection": "force",
+		// This option prevents a few TS features which are unsafe when treating modules as isolated files.
+		"isolatedModules": true,
+		// Enables all strict type checking options.
+		"strict": true,
+		// Prevents you from accessing an array or object without first checking if it's defined. This is a great way to prevent runtime errors
+		"noUncheckedIndexedAccess": true,
+		// Makes the override keyword useful in classes.
+		"noImplicitOverride": true,
+
+		// The best option because it most closely mimics how bundlers treat modules. moduleResolution: Bundler is implied from this option
+		"module": "Preserve",
+		// Not transipiling with TypeScript, so we don't need to emit anything.
+		"noEmit": true,
+
+		// Tells TypeScript what built-in types to include. es2022 is the best option for stability.
+		"lib": ["es2022"]
 	},
+	// exlcude files from type checking
 	"exclude": ["node_modules", "dist"],
-	"include": ["./**/*.ts"]
+
+	"ts-node": {
+		"transpileOnly": true // https://github.com/nodejs/node/issues/48207#issuecomment-1872668858
+	}
 }

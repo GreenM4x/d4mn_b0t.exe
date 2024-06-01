@@ -1,8 +1,8 @@
-const { AttachmentBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle } = require('discord.js');
-const { writeDb } = require('../db/dbFunctions.cjs');
-const { getCardData, getColorForCardType } = require('./card.cjs');
-const { shuffle, createEmbed } = require('./utils.cjs');
-const { RARITIES } = require('./variables.cjs');
+import { AttachmentBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle } from 'discord.js';
+import { writeDb } from '../db/dbFunctions.js';
+import { getCardData, getColorForCardType } from './card.js';
+import { shuffle, createEmbed } from './utils.js';
+import { RARITIES } from './variables.js';
 
 const openBoosterPack = async (interaction, binder, pack) => {
 	const cards = createBoosterPack(pack.cards);
@@ -200,6 +200,8 @@ function getRandomCardByProbabilities(cards, rarityProbabilities) {
 	return cards[index];
 }
 
+export { createBoosterPack, openBoosterPack };
+
 // For testing :)
 
 // const rarities = Object.keys(rarityProbabilities);
@@ -222,6 +224,3 @@ function getRandomCardByProbabilities(cards, rarityProbabilities) {
 
 // let summary = testBoosterPackCreation(cards, 1000000); // open 1000000 packs :o
 // console.table("result", summary);
-
-exports.createBoosterPack = createBoosterPack;
-exports.openBoosterPack = openBoosterPack;
