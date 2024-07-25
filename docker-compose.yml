@@ -13,15 +13,16 @@ services:
       - LAVALINK_HOST=${LAVALINK_HOST}
       - LAVALINK_PW=${LAVALINK_PW}
     restart: unless-stopped
+    labels:
+      traefik.enable: false
     volumes:
       - ../database/db.json:/GreenBot/db.json:rw
       - ../database/cardInfo.json:/GreenBot/db/cardInfo.json:rw
       - ../database/images:/GreenBot/db/images:rw
       - ../database/booster_packs:/GreenBot/db/booster_packs:rw
     networks:
-      - proxy
+      - web
 
 networks:
   proxy:
-    driver: bridge
     external: true
