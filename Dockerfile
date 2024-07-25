@@ -1,8 +1,18 @@
+# Build stage
+FROM node:20-alpine AS builder
+WORKDIR /GreenBot
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+# Production stage
 FROM node:20-alpine
 LABEL name="greenbot"
 WORKDIR /GreenBot
-COPY ./package*.json ./
+COPY package*.json ./
 RUN npm ci --production
-COPY ./ ./
+COPY --from=builder /GreenBot/dist ./dist
+COPY ./db ./db
 RUN npm install pm2 -g
-CMD ["pm2-runtime", "index.js", "--node-args='--es-module-specifier-resolution=node'"]
+CMD ["pm2-runtime", "dist/index.js"]
