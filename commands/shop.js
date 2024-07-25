@@ -1,36 +1,32 @@
-import fs from 'fs';
-import path from 'path';
-import {
-	SlashCommandBuilder,
-	ActionRowBuilder,
-	ButtonBuilder,
-	ButtonStyle,
-	AttachmentBuilder,
-	StringSelectMenuBuilder,
-} from 'discord.js';
+import { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, StringSelectMenuBuilder } from 'discord.js';
 import seedrandom from 'seedrandom';
 import { getUserData, writeDb } from '../db/dbFunctions.js';
 import { createEmbed } from '../shared/utils.js';
-import boosterPacksData from '../db/booster_packs/data.json' with { type: 'json' };
+import boosterPacksData from '../db/booster_packs/data.json' assert { type: 'json' };
 import { MAX_PURCHASES_PER_PACK_PER_DAY, MAX_BOOSTERS_IN_SHOP } from '../shared/variables.js';
 import { openBoosterPack } from '../shared/booster-pack.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const data = new SlashCommandBuilder().setName('shop').setDescription('Buy and open booster packs');
 
 async function execute(interaction) {
-	const boosterPacks = boosterPacksData
-		.map((packData) => ({
-			id: packData.code,
-			name: packData.name,
-			price: packData.price,
-			description:
-				'A booster pack containing random cards. \n Five new booster packs are available every day.',
-			image: `${packData.code.split('-')[0]}.png`,
-			cards: packData.cards,
-		}))
-		.filter((pack) =>
-			fs.existsSync(path.join(__dirname, '..', 'db', 'booster_packs', 'images', pack.image)),
-		);
+    const boosterPacks = boosterPacksData
+        .map((packData) => ({
+            id: packData.code,
+            name: packData.name,
+            price: packData.price,
+            description:
+                'A booster pack containing random cards. \n Five new booster packs are available every day.',
+            image: `${packData.code.split('-')[0]}.png`,
+            cards: packData.cards,
+        }))
+        .filter((pack) =>
+            fs.existsSync(path.join(__dirname, '..', 'db', 'booster_packs', 'images', pack.image))
+        );
 
 	const dailyBoosterPacks = generateDailyBoosterPacks(boosterPacks);
 
