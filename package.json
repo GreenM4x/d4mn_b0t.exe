@@ -12,7 +12,8 @@
 		"start": "node --no-warnings ./dist/index.js",
 		"lint": "eslint . --ext .js,.jsx,.ts,.tsx",
 		"lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
-		"deploy": "npm run build && node deploy-commands.js"
+		"predeploy": "npm run build",
+		"deploy": "node --no-warnings dist/deploy-commands.js"
 	},
 	"keywords": [
 		"discord"
