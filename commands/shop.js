@@ -6,10 +6,9 @@ import boosterPacksData from '../db/booster_packs/data.json' assert { type: 'jso
 import { MAX_PURCHASES_PER_PACK_PER_DAY, MAX_BOOSTERS_IN_SHOP } from '../shared/variables.js';
 import { openBoosterPack } from '../shared/booster-pack.js';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { promises as fs } from 'fs';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = import.meta.dirname;
 
 const data = new SlashCommandBuilder().setName('shop').setDescription('Buy and open booster packs');
 
@@ -23,13 +22,21 @@ async function execute(interaction) {
                 'A booster pack containing random cards. \n Five new booster packs are available every day.',
             image: `${packData.code.split('-')[0]}.png`,
             cards: packData.cards,
-        }))
-        .filter((pack) =>
-            fs.existsSync(path.join(__dirname, '..', 'db', 'booster_packs', 'images', pack.image))
-        );
+        }));
 
-	const dailyBoosterPacks = generateDailyBoosterPacks(boosterPacks);
+    const filteredBoosterPacks = [];
+    for (const pack of boosterPacks) {
+        const imagePath = path.join(__dirname, '..', 'db', 'booster_packs', 'images', pack.image);
+        try {
+            await fs.access(imagePath);
+            filteredBoosterPacks.push(pack);
+        } catch (error) {
+            console.log(`Image not found for pack: ${pack.name}`);
+        }
+    }
 
+
+	const dailyBoosterPacks = generateDailyBoosterPacks(filteredBoosterPacks);
 	let currentPage = 0;
 
 	const binder = getUserData(interaction.user.id);
