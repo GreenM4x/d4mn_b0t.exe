@@ -1,5 +1,7 @@
 import cardInfo from '../db/cardInfo.json' assert { type: 'json' };
-import { BinderCard, CardEmbedData, CardData, CardDetails } from './models/card.models.js';
+import { type BinderCard } from './models/binder.models.js';
+import { type CardEmbedData, type CardData, type CardDetails } from './models/card.models.js';
+
 
 const getCardData = (
 	binderCard: BinderCard,

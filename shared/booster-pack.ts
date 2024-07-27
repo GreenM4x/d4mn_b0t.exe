@@ -1,20 +1,37 @@
-import { AttachmentBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle } from 'discord.js';
+import {
+	AttachmentBuilder,
+	ButtonBuilder,
+	ActionRowBuilder,
+	ButtonStyle,
+	ChatInputCommandInteraction,
+} from 'discord.js';
 import { writeDb } from '../db/dbFunctions.js';
 import { getCardData, getColorForCardType } from './card.js';
 import { shuffle, createEmbed } from './utils.js';
 import { RARITIES } from './variables.js';
+import { type BoosterPack } from './models/boosterpack.models.js';
+import { type Binder, type BinderCard } from './models/binder.models.js';
 
-const openBoosterPack = async (interaction, binder, pack) => {
+
+const openBoosterPack = async (
+	interaction: ChatInputCommandInteraction,
+	binder: Binder,
+	pack: BoosterPack,
+): Promise<void> => {
 	const cards = createBoosterPack(pack.cards);
 	let currentCardIndex = 0;
-	let cardData = getCardData(cards[currentCardIndex], pack.id);
+	let cardData = getCardData(cards[currentCardIndex]!, pack.id);
 	let cardsAdded = 0;
 	let cardsSold = 0;
 	const totalBoosterValue = cards
-		.reduce((acc, card) => acc + parseFloat(getCardData(card).price), 0)
+		.reduce((acc, card) => {
+			const cardData = getCardData(card, pack.id);
+			return acc + (cardData ? parseFloat(cardData.price) : 0);
+		}, 0)
 		.toFixed(2);
 
 	const displayCardEmbed = () => {
+		if (!cardData) return null;
 		const embed = createEmbed({
 			title: cardData.name,
 			fields: [
@@ -61,11 +78,19 @@ const openBoosterPack = async (interaction, binder, pack) => {
 		.setStyle(ButtonStyle.Success)
 		.setEmoji('🤑');
 
-	const actionRow = new ActionRowBuilder().addComponents(addToBinderButton, sellButton);
+	const actionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+		addToBinderButton,
+		sellButton,
+	);
+
+	if (!cardData) {
+		console.error('No card data available');
+		return;
+	}
 
 	const boosterMessage = await interaction.followUp({
 		content: `Opening ${pack.name}...`,
-		embeds: [displayCardEmbed()],
+		embeds: [displayCardEmbed()!],
 		components: [actionRow],
 		files: [
 			new AttachmentBuilder(`./db/images/${cardData.id}.jpg`, {
@@ -74,45 +99,51 @@ const openBoosterPack = async (interaction, binder, pack) => {
 		],
 	});
 
-	const filter = (i) =>
-		i.isButton() &&
+	const filter = (
+		i: ChatInputCommandInteraction & {
+			customId: 'add_to_binder_id_booster' | 'sell_id_booster';
+		},
+	) =>
 		i.user.id === interaction.user.id &&
 		(i.customId === 'add_to_binder_id_booster' || i.customId === 'sell_id_booster');
-	const collector = interaction.channel.createMessageComponentCollector({
-		filter,
+	const collector = interaction.channel!.createMessageComponentCollector({
+		filter: (filter as any),
 		time: 1800000,
 	});
 
 	collector.on('collect', async (i) => {
 		let message = '';
 		if (i.customId === 'add_to_binder_id_booster') {
-			binder.cards.push({ id: cardData.id, rarity: cardData.rarity });
+			binder.cards.push({ id: cardData!.id, rarity: cardData!.rarity });
 			binder.stats.cardsAddedToBinder++;
 			cardsAdded++;
 			message = 'The previous card was added to binder';
 		} else if (i.customId === 'sell_id_booster') {
-			binder.currency += parseFloat(cardData.price);
+			binder.currency += parseFloat(cardData!.price);
 			cardsSold++;
 			binder.stats.cardsSold++;
-			message = `The previous card was sold for ${cardData.price}€`;
+			message = `The previous card was sold for ${cardData!.price}€`;
 		}
 
 		writeDb(binder);
 		currentCardIndex++;
 		if (currentCardIndex < cards.length) {
-			cardData = getCardData(cards[currentCardIndex]);
-			const updatedEmbed = displayCardEmbed().setFooter({ text: message });
-			await interaction.channel.messages.edit(boosterMessage.id, {
-				embeds: [updatedEmbed],
-				components: [actionRow],
-				files: [
-					new AttachmentBuilder(`./db/images/${cardData.id}.jpg`, {
-						name: `${cardData.id}.jpg`,
-					}),
-				],
-			});
+			cardData = getCardData(cards[currentCardIndex]!, pack.id);
+			const updatedEmbed = displayCardEmbed();
+			if (updatedEmbed) {
+				updatedEmbed.setFooter({ text: message });
+				await interaction.channel!.messages.edit(boosterMessage.id, {
+					embeds: [updatedEmbed],
+					components: [actionRow],
+					files: [
+						new AttachmentBuilder(`./db/images/${cardData!.id}.jpg`, {
+							name: `${cardData!.id}.jpg`,
+						}),
+					],
+				});
+			}
 		} else {
-			await interaction.channel.messages.edit(boosterMessage.id, {
+			await interaction.channel!.messages.edit(boosterMessage.id, {
 				content: 'All cards have been drawn!',
 				embeds: [displaySummaryEmbed()],
 				components: [],
@@ -120,13 +151,13 @@ const openBoosterPack = async (interaction, binder, pack) => {
 			});
 			collector.stop();
 		}
-		i.deferUpdate();
+		await i.deferUpdate();
 	});
 };
 
-const createBoosterPack = (cards) => {
+const createBoosterPack = (cards: BinderCard[]): BinderCard[] => {
 	const rarityProbabilities = RARITIES;
-	const allUniqueRarities = cards.reduce((acc, card) => {
+	const allUniqueRarities = cards.reduce((acc: string[], card) => {
 		if (!acc.includes(card.rarity)) {
 			acc.push(card.rarity);
 		}
@@ -137,7 +168,7 @@ const createBoosterPack = (cards) => {
 		Object.entries(rarityProbabilities).filter(([key]) => allUniqueRarities.includes(key)),
 	);
 
-	const boosterPack = [];
+	const boosterPack: BinderCard[] = [];
 	const remainingCards = [...cards];
 
 	// Add 7 commons, if there are no commons or too less, add rare cards instead. If there are no rare cards, add other rarities.
@@ -177,19 +208,22 @@ const createBoosterPack = (cards) => {
 	return boosterPack;
 };
 
-function getRandomCardByRarity(cards, rarity) {
+function getRandomCardByRarity(cards: BinderCard[], rarity: string): BinderCard | null {
 	const cardsOfRarity = cards.filter((card) => card.rarity === rarity);
 	if (cardsOfRarity.length === 0) return null;
 	const index = Math.floor(Math.random() * cardsOfRarity.length);
-	return cardsOfRarity[index];
+	return cardsOfRarity[index]!;
 }
 
-function getRandomCardByProbabilities(cards, rarityProbabilities) {
+function getRandomCardByProbabilities(
+	cards: BinderCard[],
+	rarityProbabilities: { [key: string]: number },
+): BinderCard | null {
 	const randomNumber = Math.random();
 
-	const shuffledRarities = shuffle(rarityProbabilities);
-	for (const rarity in shuffledRarities) {
-		if (randomNumber <= shuffledRarities[rarity]) {
+	const shuffledRarities = shuffle(Object.entries(rarityProbabilities));
+	for (const [rarity, probability] of shuffledRarities) {
+		if (randomNumber <= probability) {
 			const card = getRandomCardByRarity(cards, rarity);
 			if (card) return card;
 		}
@@ -197,7 +231,7 @@ function getRandomCardByProbabilities(cards, rarityProbabilities) {
 
 	// if no card has been returned yet, return a random card
 	const index = Math.floor(Math.random() * cards.length);
-	return cards[index];
+	return cards[index] || null;
 }
 
 export { createBoosterPack, openBoosterPack };
