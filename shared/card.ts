@@ -1,6 +1,6 @@
-import cardInfo from '../db/cardInfo.json';
 import { type BinderCard } from './models/binder.models.js';
 import { type CardEmbedData, type CardData, type CardDetails } from './models/card.models.js';
+import { getCardInfo } from './state/global/global.state.js';
 
 
 const getCardData = (
@@ -8,7 +8,7 @@ const getCardData = (
 	packId: string | null = null,
 ): CardEmbedData | null => {
 	if (!binderCard) return null;
-	const cardData = (cardInfo as CardData).data;
+	const cardData = getCardInfo()?.data ?? [];
 	const cardDetails = cardData.find((card: CardDetails) => card.id === binderCard.id);
 	if (!cardDetails) return null;
 
@@ -27,7 +27,7 @@ const getCardData = (
 };
 
 const getRandomCard = () => {
-	const cardData = (cardInfo as CardData).data;
+	const cardData = getCardInfo()?.data ?? [];
 	const card = cardData[Math.floor(Math.random() * cardData.length)]!;
 	const price = card.card_prices[0]?.cardmarket_price ?? '0';
 	const img = `attachment://${card.id}.jpg`;

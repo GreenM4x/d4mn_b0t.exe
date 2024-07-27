@@ -11,6 +11,8 @@ import {
 import dotenv from 'dotenv';
 import { Shoukaku, Connectors } from 'shoukaku';
 import ExtendedClient from './shared/music/ExtendedClient.js';
+import { setCardInfo } from './shared/state/global/global.state.js';
+import { CardData } from './shared/models/card.models.js';
 
 type CustomCommand = {
 	data: SlashCommandBuilder;
@@ -34,6 +36,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const commandsPath = path.join(__dirname, 'commands');
 
+async function loadCardInfo(): Promise<void> {
+	const __dirname = import.meta.dirname;
+	const cardInfoPath = path.join(__dirname, 'db', 'cardInfo.json');
+	const cardInfoData = await fs.readFile(cardInfoPath, 'utf-8');
+	setCardInfo(JSON.parse(cardInfoData) as CardData);
+}
+
 async function loadCommands() {
 	const commandFiles = await fs.readdir(commandsPath);
 	for (const file of commandFiles) {
@@ -55,6 +64,7 @@ async function loadCommands() {
 	}
 }
 
+void loadCardInfo();
 void loadCommands();
 
 shoukaku.on('error', (_, error: Error) => console.error(error));
