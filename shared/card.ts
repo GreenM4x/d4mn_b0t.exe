@@ -1,8 +1,17 @@
-import cardInfo from '../db/cardInfo.json' with { type: 'json' };
+import cardInfo from '../db/cardInfo.json' assert { type: 'json' };
+import { type BinderCard } from './models/binder.models.js';
+import { type CardEmbedData, type CardData, type CardDetails } from './models/card.models.js';
 
-const getCardData = (binderCard, packId = null) => {
+
+const getCardData = (
+	binderCard: BinderCard,
+	packId: string | null = null,
+): CardEmbedData | null => {
 	if (!binderCard) return null;
-	const cardDetails = cardInfo.data.find((card) => card.id === binderCard.id);
+	const cardData = (cardInfo as CardData).data;
+	const cardDetails = cardData.find((card: CardDetails) => card.id === binderCard.id);
+	if (!cardDetails) return null;
+
 	const rarity = binderCard.rarity;
 	const price = getCardPrice(cardDetails, rarity, packId);
 	const img = `attachment://${binderCard.id}.jpg`;
@@ -18,8 +27,9 @@ const getCardData = (binderCard, packId = null) => {
 };
 
 const getRandomCard = () => {
-	const card = cardInfo.data[Math.floor(Math.random() * cardInfo.data.length)];
-	const price = card.card_prices[0].cardmarket_price;
+	const cardData = (cardInfo as CardData).data;
+	const card = cardData[Math.floor(Math.random() * cardData.length)]!;
+	const price = card.card_prices[0]?.cardmarket_price ?? '0';
 	const img = `attachment://${card.id}.jpg`;
 	const rarity =
 		card.card_sets?.[Math.floor(Math.random() * (card.card_sets?.length || 1))]?.set_rarity ||
@@ -35,9 +45,9 @@ const getRandomCard = () => {
 	};
 };
 
-const getColorForCardType = (type) => {
-	const typeColors = {
-		Normal: 0xffff00, // Yellow
+const getColorForCardType = (type: string): number => {
+	const typeColors: { [key: string]: number } = {
+    Normal: 0xffff00, // Yellow
 		Effect: 0xffa500, // Orange
 		Ritual: 0xadd8e6, // Light blue
 		Fusion: 0xee82ee, // Violet
@@ -50,28 +60,31 @@ const getColorForCardType = (type) => {
 		Token: 0x808080, // Gray
 	};
 
-	// Find the first color that matches a partial key in the typeColors object
 	const color = Object.keys(typeColors).find((key) => type.includes(key));
-	return typeColors[color] || 0xffff00; // Default color if type not found
+	return color ? typeColors[color]! : 0xffff00;
 };
 
-const getCardPrice = (cardDetails, rarity, packId = null) => {
+const getCardPrice = (
+	cardDetails: CardDetails,
+	rarity: string,
+	packId: string | null = null,
+): string => {
 	const isBasicRarity = ['Common', 'Rare', 'Super Rare'].includes(rarity);
 	if (isBasicRarity) {
-		return cardDetails.card_prices[0].cardmarket_price;
+		return cardDetails.card_prices[0]?.cardmarket_price ?? '0';
 	}
 
-	const packCode = packId ? packId.split('-')[0] : null;
+	const packCode = packId ? packId.split('-')[0]! : null;
 
 	const price = cardDetails.card_sets.find(
-		(set) => set.set_rarity === rarity && (!packId || set.set_code.includes(packCode)),
+		(set) => set.set_rarity === rarity && (!packId || set.set_code.includes(packCode ?? '')),
 	);
 
 	if (price?.set_price && parseFloat(price.set_price) > 0) {
 		return price.set_price;
 	}
 
-	return cardDetails.card_prices[0].cardmarket_price;
+	return cardDetails.card_prices[0]?.cardmarket_price ?? '0';
 };
 
 export { getCardData, getRandomCard, getColorForCardType };
