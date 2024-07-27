@@ -1,4 +1,4 @@
-import { CardData } from '../../models/card.models.js';
+import { type CardData } from '../../models/card.models.js';
 
 let cardInfo: CardData | null = null;
 
