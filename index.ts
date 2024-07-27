@@ -12,7 +12,7 @@ import dotenv from 'dotenv';
 import { Shoukaku, Connectors } from 'shoukaku';
 import ExtendedClient from './shared/music/ExtendedClient.js';
 import { setCardInfo } from './shared/state/global/global.state.js';
-import { CardData } from './shared/models/card.models.js';
+import { type CardData } from './shared/models/card.models.js';
 
 type CustomCommand = {
 	data: SlashCommandBuilder;
