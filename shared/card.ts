@@ -1,4 +1,4 @@
-import cardInfo from '../db/cardInfo.json' assert { type: 'json' };
+import cardInfo from '../db/cardInfo.json';
 import { type BinderCard } from './models/binder.models.js';
 import { type CardEmbedData, type CardData, type CardDetails } from './models/card.models.js';
 
