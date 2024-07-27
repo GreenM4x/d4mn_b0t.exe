@@ -7,7 +7,7 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM --platform=$TARGETPLATFORM node:20-alpine
+FROM node:20-alpine
 LABEL name="d4mn_bot.exe"
 WORKDIR /d4mn_bot.exe
 COPY package*.json ./
