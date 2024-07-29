@@ -4,6 +4,7 @@ import {
 	ActionRowBuilder,
 	ButtonStyle,
 	ChatInputCommandInteraction,
+	ButtonInteraction,
 } from 'discord.js';
 import { writeDb } from '../db/dbFunctions.js';
 import { getCardData, getColorForCardType } from './card.js';
@@ -14,7 +15,7 @@ import { type Binder, type BinderCard } from './models/binder.models.js';
 
 
 const openBoosterPack = async (
-	interaction: ChatInputCommandInteraction,
+	interaction: ButtonInteraction,
 	binder: Binder,
 	pack: BoosterPack,
 ): Promise<void> => {
