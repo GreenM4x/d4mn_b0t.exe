@@ -1,4 +1,17 @@
-import { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, StringSelectMenuBuilder } from 'discord.js';
+import {
+	SlashCommandBuilder,
+	ActionRowBuilder,
+	ButtonBuilder,
+	ButtonStyle,
+	AttachmentBuilder,
+	StringSelectMenuBuilder,
+	ChatInputCommandInteraction,
+	ButtonInteraction,
+	StringSelectMenuInteraction,
+	MessageActionRowComponentBuilder,
+	CollectorFilter,
+	MessageComponentInteraction,
+} from 'discord.js';
 import seedrandom from 'seedrandom';
 import { getUserData, writeDb } from '../db/dbFunctions.js';
 import { createEmbed } from '../shared/utils.js';
@@ -7,34 +20,36 @@ import { MAX_PURCHASES_PER_PACK_PER_DAY, MAX_BOOSTERS_IN_SHOP } from '../shared/
 import { openBoosterPack } from '../shared/booster-pack.js';
 import path from 'path';
 import { promises as fs } from 'fs';
+import { type BoosterPack } from '../shared/models/boosterpack.models.js';
+import { type Binder } from '../shared/models/binder.models.js';
 
 const __dirname = import.meta.dirname;
 
 const data = new SlashCommandBuilder().setName('shop').setDescription('Buy and open booster packs');
 
-async function execute(interaction) {
-    const boosterPacks = boosterPacksData
-        .map((packData) => ({
-            id: packData.code,
-            name: packData.name,
-            price: packData.price,
-            description:
-                'A booster pack containing random cards. \n Five new booster packs are available every day.',
-            image: `${packData.code.split('-')[0]}.png`,
-            cards: packData.cards,
-        }));
+async function execute(interaction: ChatInputCommandInteraction) {
+	const boosterPacks = boosterPacksData.map(
+		(packData): BoosterPack => ({
+			id: packData.code,
+			name: packData.name,
+			price: packData.price,
+			description:
+				'A booster pack containing random cards. \n Five new booster packs are available every day.',
+			image: `${packData.code.split('-')[0]}.png`,
+			cards: packData.cards,
+		}),
+	);
 
-    const filteredBoosterPacks = [];
-    for (const pack of boosterPacks) {
-        const imagePath = path.join(__dirname, '..', 'db', 'booster_packs', 'images', pack.image);
-        try {
-            await fs.access(imagePath);
-            filteredBoosterPacks.push(pack);
-        } catch (error) {
-            console.log(`Image not found for pack: ${pack.name}`);
-        }
-    }
-
+	const filteredBoosterPacks: BoosterPack[] = [];
+	for (const pack of boosterPacks) {
+		const imagePath = path.join(__dirname, '..', 'db', 'booster_packs', 'images', pack.image);
+		try {
+			await fs.access(imagePath);
+			filteredBoosterPacks.push(pack);
+		} catch (error) {
+			console.log(`Image not found for pack: ${pack.name}`);
+		}
+	}
 
 	const dailyBoosterPacks = generateDailyBoosterPacks(filteredBoosterPacks);
 	let currentPage = 0;
@@ -43,7 +58,7 @@ async function execute(interaction) {
 	const userCurrency = binder ? binder.currency : 0;
 
 	const displayShopEmbed = () => {
-		const pack = dailyBoosterPacks[currentPage];
+		const pack = dailyBoosterPacks[currentPage]!;
 		const embed = createEmbed({
 			title: pack.name,
 			description: pack.description,
@@ -67,7 +82,7 @@ async function execute(interaction) {
 		return embed;
 	};
 
-	const createSelectMenu = (selectedValue) => {
+	const createSelectMenu = (selectedValue: BoosterPack) => {
 		const selectMenu = new StringSelectMenuBuilder()
 			.setCustomId('select_menu_id_shop')
 			.setPlaceholder('Choose a booster pack');
@@ -80,10 +95,10 @@ async function execute(interaction) {
 			});
 		});
 
-		return new ActionRowBuilder().addComponents(selectMenu);
+		return new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(selectMenu);
 	};
 
-	const selectRow = createSelectMenu(dailyBoosterPacks[currentPage]);
+	const selectRow = createSelectMenu(dailyBoosterPacks[currentPage]!);
 
 	const prevButton = new ButtonBuilder()
 		.setCustomId('prev_button_id_shop')
@@ -101,81 +116,60 @@ async function execute(interaction) {
 		.setEmoji('▶️')
 		.setStyle(ButtonStyle.Secondary);
 
-	const buyRow = new ActionRowBuilder().addComponents(prevButton, buyButton, nextButton);
+	const buyRow = new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
+		prevButton,
+		buyButton,
+		nextButton,
+	);
 
 	await interaction.reply({
 		embeds: [displayShopEmbed()],
 		components: [selectRow, buyRow],
 		files: [
 			new AttachmentBuilder(
-				'./db/booster_packs/images/' + dailyBoosterPacks[currentPage].image,
+				`./db/booster_packs/images/${dailyBoosterPacks[currentPage]!.image}`,
 				{
-					name: dailyBoosterPacks[currentPage].image,
+					name: dailyBoosterPacks[currentPage]!.image,
 				},
 			),
 		],
 	});
 
-	const filter = (i) =>
+	const filter: CollectorFilter<[MessageComponentInteraction]> = (i) =>
 		(i.isButton() || i.isStringSelectMenu()) &&
 		i.user.id === interaction.user.id &&
 		i.customId.includes('id_shop');
-	const collector = interaction.channel.createMessageComponentCollector({
+	const collector = interaction.channel!.createMessageComponentCollector({
 		filter,
 		time: 60000,
 	});
 
-	collector.on('collect', async (i) => {
-		if (i.customId === 'prev_button_id_shop') {
-			currentPage = currentPage > 0 ? currentPage - 1 : dailyBoosterPacks.length - 1;
-		} else if (i.customId === 'next_button_id_shop') {
-			currentPage = (currentPage + 1) % dailyBoosterPacks.length;
-		} else if (i.customId === 'select_menu_id_shop') {
+	collector.on('collect', async (i: StringSelectMenuInteraction | ButtonInteraction) => {
+		if (i.isButton()) {
+			if (i.customId === 'prev_button_id_shop') {
+				currentPage = currentPage > 0 ? currentPage - 1 : dailyBoosterPacks.length - 1;
+			} else if (i.customId === 'next_button_id_shop') {
+				currentPage = (currentPage + 1) % dailyBoosterPacks.length;
+			} else if (i.customId === 'buy_button_id_shop') {
+				await handleBuyButton(i, binder, dailyBoosterPacks[currentPage]!);
+				collector.stop();
+				return;
+			}
+		} else if (i.isStringSelectMenu()) {
 			const selectedPackId = i.values[0];
 			currentPage = dailyBoosterPacks.findIndex((pack) => pack.id === selectedPackId);
 		}
 
-		const pack = dailyBoosterPacks[currentPage];
-		if (i.customId === 'buy_button_id_shop') {
-			if (userCurrency < pack.price) {
-				await i.reply({
-					content: "You don't have enough money to buy this pack.",
-					ephemeral: true,
-				});
-				return;
-			}
-
-			if (binder.dailyPurchases.packs[pack.id] >= MAX_PURCHASES_PER_PACK_PER_DAY) {
-				await i.reply({
-					content: 'You have already bought this booster pack today.',
-					ephemeral: true,
-				});
-				return;
-			}
-
-			await interaction.followUp({
-				content: `You bought ${pack.name} for ${pack.price}€.`,
-				ephemeral: true,
-			});
-			binder.currency -= pack.price;
-			binder.dailyPurchases.packs[pack.id] = (binder.dailyPurchases.packs[pack.id] || 0) + 1;
-			writeDb(binder);
-			await openBoosterPack(interaction, binder, pack);
-		}
-
-		if (i.customId === 'buy_button_id_shop') {
-			collector.stop();
-		} else {
-			await i.update({
-				embeds: [displayShopEmbed()],
-				components: [createSelectMenu(dailyBoosterPacks[currentPage]), buyRow],
-				files: [
-					new AttachmentBuilder('./db/booster_packs/images/' + pack.image, {
-						name: pack.image,
-					}),
-				],
-			});
-		}
+		const pack = dailyBoosterPacks[currentPage]!;
+		await i.update({
+			embeds: [displayShopEmbed()],
+			components: [createSelectMenu(dailyBoosterPacks[currentPage]!), buyRow],
+			files: [
+				new AttachmentBuilder(`./db/booster_packs/images/${pack.image}`, {
+					name: pack.image,
+				}),
+			],
+		});
 	});
 
 	collector.on('end', async () => {
@@ -185,10 +179,10 @@ async function execute(interaction) {
 	});
 }
 
-const generateDailyBoosterPacks = (boosterPacks) => {
+const generateDailyBoosterPacks = (boosterPacks: BoosterPack[]): BoosterPack[] => {
 	const today = new Date();
 	const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
-	const rng = seedrandom(seed);
+	const rng = seedrandom(seed.toString());
 
 	const randomBoosterPacks = boosterPacks
 		.map((pack) => ({ ...pack, random: rng() }))
@@ -197,5 +191,32 @@ const generateDailyBoosterPacks = (boosterPacks) => {
 
 	return randomBoosterPacks;
 };
+
+async function handleBuyButton(i: ButtonInteraction, binder: Binder, pack: BoosterPack) {
+	if (binder.currency < pack.price) {
+		await i.reply({
+			content: "You don't have enough money to buy this pack.",
+			ephemeral: true,
+		});
+		return;
+	}
+
+	if (binder.dailyPurchases.packs[pack.id]! >= MAX_PURCHASES_PER_PACK_PER_DAY) {
+		await i.reply({
+			content: 'You have already bought this booster pack today.',
+			ephemeral: true,
+		});
+		return;
+	}
+
+	await i.reply({
+		content: `You bought ${pack.name} for ${pack.price}€.`,
+		ephemeral: true,
+	});
+	binder.currency -= pack.price;
+	binder.dailyPurchases.packs[pack.id] = (binder.dailyPurchases.packs[pack.id] || 0) + 1;
+	writeDb(binder);
+	await openBoosterPack(i, binder, pack);
+}
 
 export { data, execute };
