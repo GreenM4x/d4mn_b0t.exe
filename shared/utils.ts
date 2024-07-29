@@ -82,20 +82,20 @@ const createFilterMenu = (cardData: CardEmbedData[], activeFilters: string[] = [
     .setMaxValues(options.length);
 };
 
-const filterCards = (cards: CardEmbedData[], filters: string[] | undefined): CardEmbedData[] => {
+const filterCards = (cards: [CardEmbedData, number][], filters: string[] | undefined): [CardEmbedData, number][] => {
   if (!filters || !filters.length) return cards;
 
   const typeFilters = filters
-    .filter((filter) => filter.startsWith('type_'))
-    .map((filter) => filter.replace('type_', ''));
+      .filter((filter) => filter.startsWith('type_'))
+      .map((filter) => filter.replace('type_', ''));
   const rarityFilters = filters
-    .filter((filter) => filter.startsWith('rarity_'))
-    .map((filter) => filter.replace('rarity_', ''));
+      .filter((filter) => filter.startsWith('rarity_'))
+      .map((filter) => filter.replace('rarity_', ''));
 
-  return cards.filter((card) => {
-    const typeMatch = typeFilters.length === 0 || typeFilters.includes(card.type);
-    const rarityMatch = rarityFilters.length === 0 || rarityFilters.includes(card.rarity);
-    return typeMatch && rarityMatch;
+  return cards.filter(([card]) => {
+      const typeMatch = typeFilters.length === 0 || typeFilters.includes(card.type);
+      const rarityMatch = rarityFilters.length === 0 || rarityFilters.includes(card.rarity);
+      return typeMatch && rarityMatch;
   });
 };
 
@@ -124,23 +124,23 @@ const createSortMenu = (activeSort: string | undefined): StringSelectMenuBuilder
   return sortMenu;
 };
 
-const sortCards = (cards: CardEmbedData[], sortBy: string | undefined): CardEmbedData[] => {
+const sortCards = (cards: [CardEmbedData, number][], sortBy: string | undefined): [CardEmbedData, number][] => {
   if (!sortBy) return cards;
 
   const sortedCards = [...cards];
 
   switch (sortBy) {
-    case 'sort_rarity':
-      sortedCards.sort((a, b) => a.rarity.localeCompare(b.rarity));
-      break;
-    case 'sort_price':
-      sortedCards.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
-      break;
-    case 'sort_type':
-      sortedCards.sort((a, b) => a.type.localeCompare(b.type));
-      break;
-    default:
-      break;
+      case 'sort_rarity':
+          sortedCards.sort(([a], [b]) => a.rarity.localeCompare(b.rarity));
+          break;
+      case 'sort_price':
+          sortedCards.sort(([a], [b]) => parseFloat(b.price) - parseFloat(a.price));
+          break;
+      case 'sort_type':
+          sortedCards.sort(([a], [b]) => a.type.localeCompare(b.type));
+          break;
+      default:
+          break;
   }
 
   return sortedCards;
