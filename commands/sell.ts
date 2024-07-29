@@ -4,10 +4,18 @@ import {
 	ActionRowBuilder,
 	ButtonStyle,
 	AttachmentBuilder,
+	ChatInputCommandInteraction,
+	ButtonInteraction,
+	MessageActionRowComponentBuilder,
+	CollectorFilter,
+	MessageComponentInteraction,
+	EmbedBuilder,
 } from 'discord.js';
 import { getUserData, writeDb } from '../db/dbFunctions.js';
 import { getColorForCardType, getCardData } from '../shared/card.js';
 import { createEmbed } from '../shared/utils.js';
+import { Binder } from '../shared/models/binder.models.js';
+import { CardEmbedData } from '../shared/models/card.models.js';
 
 const data = new SlashCommandBuilder()
 	.setName('sell')
@@ -18,8 +26,9 @@ const data = new SlashCommandBuilder()
 			.setDescription('The ID of the card you want to sell')
 			.setRequired(true),
 	);
-async function execute(interaction) {
-	const cardIndex = interaction.options.getString('card_id');
+
+async function execute(interaction: ChatInputCommandInteraction) {
+	const cardIndex = parseInt(interaction.options.getString('card_id', true)) - 1;
 	const binder = getUserData(interaction.user.id);
 
 	if (!binder || binder.cards.length === 0) {
@@ -29,7 +38,7 @@ async function execute(interaction) {
 		});
 	}
 
-	const card = getCardData(binder.cards?.[cardIndex - 1]);
+	const card = getCardData(binder.cards[cardIndex]!);
 
 	if (!card) {
 		return await interaction.reply({
@@ -65,7 +74,10 @@ async function execute(interaction) {
 		.setStyle(ButtonStyle.Danger)
 		.setEmoji('✖️');
 
-	const actionRow = new ActionRowBuilder().addComponents(accept, denial);
+	const actionRow = new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
+		accept,
+		denial,
+	);
 
 	await interaction.reply({
 		embeds: [embed],
@@ -77,37 +89,53 @@ async function execute(interaction) {
 		],
 	});
 
-	const filter = (i) =>
-		i.isButton() && i.user.id === interaction.user.id && i.customId.startsWith('sell_');
-	const collector = interaction.channel.createMessageComponentCollector({
+	const filter: CollectorFilter<[MessageComponentInteraction]> = (
+		i: MessageComponentInteraction,
+	) => i.user.id === interaction.user.id && i.customId.startsWith('sell_');
+	const collector = interaction.channel!.createMessageComponentCollector({
 		filter,
 		time: 10000,
 	});
 
-	collector.on('collect', async (i) => {
+	collector.on('collect', async (i: ButtonInteraction) => {
 		if (i.customId === 'sell_accept_button_id') {
-			binder.cards.splice(cardIndex - 1, 1);
-			binder.currency += parseFloat(cardValue);
-			writeDb(binder);
-
-			embed.setColor(0x00ff00);
-			embed.setDescription('You successfully sold the card!');
-
-			await i.update({ embeds: [embed], components: [] });
-			await i.followUp({
-				content: `You sold ${card.name} for ${parseFloat(cardValue)}€!`,
-				ephemeral: true,
-			});
+			await handleSellAccept(i, binder, cardIndex, card, cardValue, embed);
 		} else if (i.customId === 'sell_denial_button_id') {
-			embed.setColor(0xff0000);
-			embed.setDescription('Sale canceled.');
-
-			await i.update({ embeds: [embed], components: [] });
-			await i.followUp({
-				content: 'You decided not to sell the card.',
-				ephemeral: true,
-			});
+			await handleSellDenial(i, embed);
 		}
+	});
+}
+
+async function handleSellAccept(
+	i: ButtonInteraction,
+	binder: Binder,
+	cardIndex: number,
+	card: CardEmbedData,
+	cardValue: string,
+	embed: EmbedBuilder,
+) {
+	binder.cards.splice(cardIndex, 1);
+	binder.currency += parseFloat(cardValue);
+	writeDb(binder);
+
+	embed.setColor(0x00ff00);
+	embed.setDescription('You successfully sold the card!');
+
+	await i.update({ embeds: [embed], components: [] });
+	await i.followUp({
+		content: `You sold ${card.name} for ${parseFloat(cardValue)}€!`,
+		ephemeral: true,
+	});
+}
+
+async function handleSellDenial(i: ButtonInteraction, embed: EmbedBuilder) {
+	embed.setColor(0xff0000);
+	embed.setDescription('Sale canceled.');
+
+	await i.update({ embeds: [embed], components: [] });
+	await i.followUp({
+		content: 'You decided not to sell the card.',
+		ephemeral: true,
 	});
 }
 
