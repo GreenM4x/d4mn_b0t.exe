@@ -15,7 +15,7 @@
 		// This option prevents a few TS features which are unsafe when treating modules as isolated files.
 		"isolatedModules": true,
 		// This option forces you to use import type and export type
-		"verbatimModuleSyntax": true,
+		"verbatimModuleSyntax": false,
 		// Enables all strict type checking options.
 		"strict": true,
 		// Prevents you from accessing an array or object without first checking if it's defined. This is a great way to prevent runtime errors
