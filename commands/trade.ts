@@ -6,11 +6,16 @@ import {
 	ButtonBuilder,
 	ButtonStyle,
 	SlashCommandBuilder,
+	ChatInputCommandInteraction,
+	MessageComponentInteraction,
+	CollectorFilter,
 } from 'discord.js';
 import { getUserData, writeDb } from '../db/dbFunctions.js';
 import { getCardData } from '../shared/card.js';
 import { TRADE_COOLDOWN } from '../shared/variables.js';
 import { add, check, remainingCooldown, remove } from '../shared/cooldownManager.js';
+import { type Binder } from '../shared/models/binder.models.js';
+import { type CardEmbedData } from '../shared/models/card.models.js';
 
 const COMMAND_NAME = 'trade';
 const SOME_RANDOM_URL = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
@@ -22,7 +27,7 @@ const data = new SlashCommandBuilder()
 		option.setName('user').setDescription('The duelist to trade with').setRequired(true),
 	);
 
-async function execute(interaction) {
+async function execute(interaction: ChatInputCommandInteraction) {
 	if (check(interaction.user.id, COMMAND_NAME)) {
 		return await interaction.reply({
 			content: `You are on a cooldown. ${remainingCooldown(
@@ -34,7 +39,7 @@ async function execute(interaction) {
 	}
 	add(interaction.user.id, COMMAND_NAME, TRADE_COOLDOWN);
 
-	const targetUser = interaction.options.getUser('user');
+	const targetUser = interaction.options.getUser('user', true);
 	if (targetUser.bot) {
 		return await interaction.reply({
 			content: 'You cannot trade with bots.',
@@ -54,38 +59,21 @@ async function execute(interaction) {
 
 	if (!targetBinder || targetBinder.cards.length === 0) {
 		return await interaction.reply({
-			content: `${targetUser.username} doesn't have any cards to trade.`,
+			content: `<@${targetUser.id}> doesn't have any cards to trade.`,
 			ephemeral: true,
 		});
 	}
 
-	// max 25 options
-	let userSelectMenu = new StringSelectMenuBuilder()
-		.setCustomId('user_select_trade')
-		.setPlaceholder(`Choose a card from ${interaction.user.username}'s binder`)
-		.addOptions(
-			userBinder.cards
-				.map((card, index) => ({
-					label: `${getCardData(card).name} - ${getCardData(card).rarity} - ${getCardData(card).price}€`,
-					value: index.toString(),
-				}))
-				.slice(0, 25),
-		);
-
-	let targetSelectMenu = new StringSelectMenuBuilder()
-		.setCustomId('target_select_trade')
-		.setPlaceholder(`Choose a card from ${targetUser.username}'s binder`)
-		.addOptions(
-			targetBinder.cards
-				.map((card, index) => ({
-					label: `${getCardData(card).name} - ${getCardData(card).rarity} - ${getCardData(card).price}€`,
-					value: index.toString(),
-				}))
-				.slice(0, 25),
-		);
-
-	let userActionRow = new ActionRowBuilder().addComponents(userSelectMenu);
-	let targetActionRow = new ActionRowBuilder().addComponents(targetSelectMenu);
+	let userSelectMenu = createSelectMenu(
+		'user_select_trade',
+		interaction.user.tag,
+		userBinder,
+	);
+	let targetSelectMenu = createSelectMenu(
+		'target_select_trade',
+		targetUser.tag,
+		targetBinder,
+	);
 
 	let tradeEmbed = new EmbedBuilder()
 		.setTitle(`Trade Preview`)
@@ -97,12 +85,7 @@ async function execute(interaction) {
 		new EmbedBuilder().setImage(`attachment://back.webp`).setURL(SOME_RANDOM_URL),
 	];
 	const attachments = [
-		new AttachmentBuilder(`./db/images/back.webp`, {
-			name: `back.webp`,
-		}),
-		new AttachmentBuilder(`./db/images/back.webp`, {
-			name: `back.webp`,
-		}),
+		new AttachmentBuilder(`./db/images/back.webp`, { name: `back.webp` }),
 	];
 
 	const cancelTradeButton = new ButtonBuilder()
@@ -110,115 +93,37 @@ async function execute(interaction) {
 		.setLabel('Cancel Trade')
 		.setStyle(ButtonStyle.Secondary);
 
-	let tradeActionRow = new ActionRowBuilder().addComponents(cancelTradeButton);
+	let tradeActionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(cancelTradeButton);
 
 	await interaction.reply({
 		content: `Trade a card with <@${targetUser.id}>!`,
 		embeds: [tradeEmbed, ...imageEmbeds],
-		components: [userActionRow, targetActionRow, tradeActionRow],
-		files: [...attachments],
+		components: [userSelectMenu, targetSelectMenu, tradeActionRow],
+		files: attachments,
 	});
 
-	let userSelectedCardIndex, targetSelectedCardIndex;
-	let userCardToTrade, targetCardToTrade;
+	let userSelectedCardIndex: number | undefined, targetSelectedCardIndex: number | undefined;
+	let userCardToTrade: CardEmbedData | undefined, targetCardToTrade: CardEmbedData | undefined;
 	let userAccepted = false;
 	let targetUserAccepted = false;
-	const createTradeEmbedFields = () => {
-		const fields = [];
 
-		if (userSelectedCardIndex === undefined && targetSelectedCardIndex !== undefined) {
-			fields.push(setTradeField(targetUser.username, targetCardToTrade));
-		} else if (userSelectedCardIndex !== undefined && targetSelectedCardIndex === undefined) {
-			fields.push(setTradeField(interaction.user.username, userCardToTrade));
-		} else if (userSelectedCardIndex !== undefined && targetSelectedCardIndex !== undefined) {
-			fields.push(
-				setTradeField(interaction.user.username, userCardToTrade),
-				setTradeField(targetUser.username, targetCardToTrade),
-			);
-		}
-
-		return fields;
-	};
-
-	const updateTradeActionRow = () => {
-		const nbAccepted = (userAccepted ? 1 : 0) + (targetUserAccepted ? 1 : 0);
-		const acceptTradeButton = new ButtonBuilder()
-			.setCustomId('accept_trade')
-			.setLabel(`Accept Trade ${nbAccepted}/2`)
-			.setStyle(ButtonStyle.Success);
-
-		if (userSelectedCardIndex !== undefined && targetSelectedCardIndex !== undefined) {
-			tradeActionRow = new ActionRowBuilder().addComponents(
-				acceptTradeButton,
-				cancelTradeButton,
-			);
-		}
-	};
-
-	const updateTradeImageEmbeds = () => {
-		if (userSelectedCardIndex !== undefined) {
-			createCardEmbed(userCardToTrade, 0);
-		} else {
-			createCardEmbed(null, 0);
-		}
-
-		if (targetSelectedCardIndex !== undefined) {
-			createCardEmbed(targetCardToTrade, 1);
-		} else {
-			createCardEmbed(null, 1);
-		}
-	};
-
-	const updateTradeEmbed = async () => {
-		if (userSelectedCardIndex !== undefined || targetSelectedCardIndex !== undefined) {
-			tradeEmbed.setURL(SOME_RANDOM_URL);
-
-			if (userSelectedCardIndex !== undefined) {
-				userCardToTrade = getCardData(userBinder.cards[userSelectedCardIndex]);
-				userActionRow = createSelectMenu(
-					userBinder,
-					userSelectedCardIndex,
-					'user_select_trade',
-				);
-			}
-
-			if (targetSelectedCardIndex !== undefined) {
-				targetCardToTrade = getCardData(targetBinder.cards[targetSelectedCardIndex]);
-				targetActionRow = createSelectMenu(
-					targetBinder,
-					targetSelectedCardIndex,
-					'target_select_trade',
-				);
-			}
-
-			tradeEmbed.setFields(createTradeEmbedFields());
-			updateTradeActionRow();
-			updateTradeImageEmbeds();
-
-			await interaction.editReply({
-				embeds: [tradeEmbed, ...imageEmbeds],
-				components: [userActionRow, targetActionRow, tradeActionRow],
-				files: [...attachments],
-			});
-		}
-	};
-
-	const filter = (i) =>
+	const filter: CollectorFilter<[MessageComponentInteraction]> = (i) =>
 		(i.user.id === interaction.user.id || i.user.id === targetUser.id) &&
 		(i.customId === 'cancel_trade' ||
 			i.customId === 'accept_trade' ||
 			i.customId === 'user_select_trade' ||
 			i.customId === 'target_select_trade');
-	const collector = interaction.channel.createMessageComponentCollector({
+
+	const collector = interaction.channel!.createMessageComponentCollector({
 		filter,
 		time: TRADE_COOLDOWN,
 	});
 
-	collector.on('collect', async (i) => {
+	collector.on('collect', async (i: MessageComponentInteraction) => {
 		await i.deferUpdate();
-		if (i.customId === 'user_select_trade' || i.customId === 'target_select_trade') {
+		if (i.isStringSelectMenu()) {
 			const isUserSelection = i.customId === 'user_select_trade';
-			const selectedCardIndex = parseInt(i.values[0]);
+			const selectedCardIndex = parseInt(i.values[0]!);
 
 			if (isUserSelection) {
 				userSelectedCardIndex = selectedCardIndex;
@@ -229,39 +134,35 @@ async function execute(interaction) {
 			userAccepted = false;
 			targetUserAccepted = false;
 			await updateTradeEmbed();
-		}
-
-		if (i.customId === 'accept_trade') {
-			if (i.user.id === interaction.user.id) {
-				userAccepted = true;
-			} else if (i.user.id === targetUser.id) {
-				targetUserAccepted = true;
-			}
-			await updateTradeEmbed();
-			if (userAccepted && targetUserAccepted) {
-				const temp = userBinder.cards[userSelectedCardIndex];
-				userBinder.cards[userSelectedCardIndex] =
-					targetBinder.cards[targetSelectedCardIndex];
-				targetBinder.cards[targetSelectedCardIndex] = temp;
-
-				writeDb(userBinder);
-				writeDb(targetBinder);
-
+		} else if (i.isButton()) {
+			if (i.customId === 'accept_trade') {
+				if (i.user.id === interaction.user.id) {
+					userAccepted = true;
+				} else if (i.user.id === targetUser.id) {
+					targetUserAccepted = true;
+				}
+				await updateTradeEmbed();
+				if (userAccepted && targetUserAccepted) {
+					await finalizeTrade(
+						interaction,
+						userBinder,
+						targetBinder,
+						userSelectedCardIndex!,
+						targetSelectedCardIndex!,
+						userCardToTrade!,
+						targetCardToTrade!,
+					);
+					remove(interaction.user.id, COMMAND_NAME);
+					collector.stop();
+				}
+			} else if (i.customId === 'cancel_trade') {
 				await disableTradeEmbed();
 				await interaction.followUp({
-					content: `${interaction.user.username} successfully traded **${userCardToTrade.name}** with ${targetUser.username}'s **${targetCardToTrade.name}**.`,
+					content: 'Trade canceled.',
 				});
 				remove(interaction.user.id, COMMAND_NAME);
-
 				collector.stop();
 			}
-		} else if (i.customId === 'cancel_trade') {
-			await disableTradeEmbed();
-			await interaction.followUp({
-				content: 'Trade canceled.',
-			});
-			remove(interaction.user.id, COMMAND_NAME);
-			collector.stop();
 		}
 	});
 
@@ -275,25 +176,97 @@ async function execute(interaction) {
 		remove(interaction.user.id, COMMAND_NAME);
 	});
 
+	async function updateTradeEmbed() {
+		if (userSelectedCardIndex !== undefined || targetSelectedCardIndex !== undefined) {
+			tradeEmbed.setURL(SOME_RANDOM_URL);
+
+			if (userSelectedCardIndex !== undefined) {
+				userCardToTrade = getCardData(userBinder.cards[userSelectedCardIndex]!)!;
+				userSelectMenu = createSelectMenu(
+					'user_select_trade',
+					interaction.user.tag,
+					userBinder,
+					userSelectedCardIndex,
+				);
+			}
+
+			if (targetSelectedCardIndex !== undefined) {
+				targetCardToTrade = getCardData(targetBinder.cards[targetSelectedCardIndex]!)!;
+				targetSelectMenu = createSelectMenu(
+					'target_select_trade',
+					targetUser.tag,
+					targetBinder,
+					targetSelectedCardIndex,
+				);
+			}
+
+			tradeEmbed.setFields(
+				createTradeEmbedFields(
+					interaction.user.tag,
+					targetUser.tag,
+					userCardToTrade,
+					targetCardToTrade,
+				),
+			);
+			updateTradeActionRow();
+			updateTradeImageEmbeds();
+
+			await interaction.editReply({
+				embeds: [tradeEmbed, ...imageEmbeds],
+				components: [userSelectMenu, targetSelectMenu, tradeActionRow],
+				files: [...attachments],
+			});
+		}
+	}
+
 	async function disableTradeEmbed() {
-		userActionRow?.components.forEach((component) => {
+		userSelectMenu.components.forEach((component) => {
 			component.setDisabled(true);
 		});
 
-		targetActionRow?.components.forEach((component) => {
+		targetSelectMenu.components.forEach((component) => {
 			component.setDisabled(true);
 		});
 
-		tradeActionRow?.components.forEach((component) => {
+		tradeActionRow.components.forEach((component) => {
 			component.setDisabled(true);
 		});
 
 		await interaction.editReply({
-			components: [userActionRow, targetActionRow, tradeActionRow],
+			components: [userSelectMenu, targetSelectMenu, tradeActionRow],
 		});
 	}
 
-	const createCardEmbed = (cardToTrade, index) => {
+	function updateTradeActionRow() {
+		const nbAccepted = (userAccepted ? 1 : 0) + (targetUserAccepted ? 1 : 0);
+		const acceptTradeButton = new ButtonBuilder()
+			.setCustomId('accept_trade')
+			.setLabel(`Accept Trade ${nbAccepted}/2`)
+			.setStyle(ButtonStyle.Success);
+
+		if (userSelectedCardIndex !== undefined && targetSelectedCardIndex !== undefined) {
+			tradeActionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+				acceptTradeButton,
+				cancelTradeButton,
+			);
+		}
+	}
+
+	function updateTradeImageEmbeds() {
+		if (userSelectedCardIndex !== undefined) {
+			createCardEmbed(userCardToTrade!, 0);
+		} else {
+			createCardEmbed(null, 0);
+		}
+
+		if (targetSelectedCardIndex !== undefined) {
+			createCardEmbed(targetCardToTrade!, 1);
+		} else {
+			createCardEmbed(null, 1);
+		}
+	}
+
+	function createCardEmbed(cardToTrade: CardEmbedData | null, index: number) {
 		const imageEmbed = new EmbedBuilder()
 			.setImage(cardToTrade ? `attachment://${cardToTrade.id}.jpg` : `attachment://back.webp`)
 			.setURL(SOME_RANDOM_URL);
@@ -307,33 +280,81 @@ async function execute(interaction) {
 
 		imageEmbeds[index] = imageEmbed;
 		attachments[index] = attachment;
-	};
+	}
 
-	const setTradeField = (username, card) => {
-		return {
-			name: `${username}'s Card`,
-			value: `${card.name} - ${card.rarity} - ${card.price}€`,
-		};
-	};
+	async function finalizeTrade(
+		interaction: ChatInputCommandInteraction,
+		userBinder: Binder,
+		targetBinder: Binder,
+		userCardIndex: number,
+		targetCardIndex: number,
+		userCard: CardEmbedData,
+		targetCard: CardEmbedData,
+	) {
+		const temp = userBinder.cards[userCardIndex];
+		userBinder.cards[userCardIndex] = targetBinder.cards[targetCardIndex]!;
+		targetBinder.cards[targetCardIndex] = temp!;
+	
+		writeDb(userBinder);
+		writeDb(targetBinder);
+	
+		await disableTradeEmbed();
+		await interaction.followUp({
+			content: `<@${interaction.user.id}> successfully traded **${userCard.name}** with <@${targetUser.id}>'s **${targetCard.name}**.`,
+		});
+	}
+}
 
-	const createSelectMenu = (binder, selectedCardIndex, customId) => {
-		const cardToTrade = getCardData(binder.cards[selectedCardIndex]);
+function createSelectMenu(
+	customId: string,
+	userId: string,
+	binder: Binder,
+	selectedCardIndex?: number,
+) {
+	const selectMenu = new StringSelectMenuBuilder()
+		.setCustomId(customId)
+		.setPlaceholder(`Choose a card from ${userId}'s binder`);
 
-		const selectMenu = new StringSelectMenuBuilder()
-			.setCustomId(customId)
-			.setPlaceholder(cardToTrade.name)
-			.addOptions(
-				binder.cards
-					.map((card, index) => ({
-						label: `${getCardData(card).name} - ${getCardData(card).rarity} - ${getCardData(card).price}€`,
-						value: index.toString(),
-						default: index === selectedCardIndex,
-					}))
-					.slice(0, 25),
-			);
+	binder.cards.slice(0, 25).forEach((card, index) => {
+		const cardData = getCardData(card);
+		if (cardData) {
+			selectMenu.addOptions({
+				label: `${cardData.name} - ${cardData.rarity} - ${cardData.price}€`,
+				value: index.toString(),
+				default: index === selectedCardIndex,
+			});
+		}
+	});
 
-		return new ActionRowBuilder().addComponents(selectMenu);
+	return new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(selectMenu);
+}
+
+function createTradeEmbedFields(
+	userId1: string,
+	userId2: string,
+	card1?: CardEmbedData,
+	card2?: CardEmbedData,
+) {
+	const fields = [];
+
+	if (card1 && !card2) {
+		fields.push(setTradeField(userId1, card1));
+	} else if (!card1 && card2) {
+		fields.push(setTradeField(userId2, card2));
+	} else if (card1 && card2) {
+		fields.push(setTradeField(userId1, card1), setTradeField(userId2, card2));
+	}
+
+	return fields;
+}
+
+function setTradeField(userId: string, card: CardEmbedData) {
+	return {
+		name: `${userId}'s Card`,
+		value: `${card.name} - ${card.rarity} - ${card.price}€`,
 	};
 }
+
+
 
 export { data, execute };
