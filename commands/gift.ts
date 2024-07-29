@@ -6,8 +6,8 @@ import {
 	AttachmentBuilder,
 	ChatInputCommandInteraction,
 	ButtonInteraction,
-	MessageActionRowComponentBuilder,
-	CollectorFilter,
+	type MessageActionRowComponentBuilder,
+	type CollectorFilter,
 	MessageComponentInteraction,
 } from 'discord.js';
 import { writeDb, getUserData } from '../db/dbFunctions.js';

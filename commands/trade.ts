@@ -8,7 +8,7 @@ import {
 	SlashCommandBuilder,
 	ChatInputCommandInteraction,
 	MessageComponentInteraction,
-	CollectorFilter,
+	type CollectorFilter,
 } from 'discord.js';
 import { getUserData, writeDb } from '../db/dbFunctions.js';
 import { getCardData } from '../shared/card.js';
@@ -64,18 +64,10 @@ async function execute(interaction: ChatInputCommandInteraction) {
 		});
 	}
 
-	let userSelectMenu = createSelectMenu(
-		'user_select_trade',
-		interaction.user.tag,
-		userBinder,
-	);
-	let targetSelectMenu = createSelectMenu(
-		'target_select_trade',
-		targetUser.tag,
-		targetBinder,
-	);
+	let userSelectMenu = createSelectMenu('user_select_trade', interaction.user.tag, userBinder);
+	let targetSelectMenu = createSelectMenu('target_select_trade', targetUser.tag, targetBinder);
 
-	let tradeEmbed = new EmbedBuilder()
+	const tradeEmbed = new EmbedBuilder()
 		.setTitle(`Trade Preview`)
 		.setURL(SOME_RANDOM_URL)
 		.setDescription('Select cards from both binders to preview the trade.');
@@ -84,9 +76,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
 		new EmbedBuilder().setImage(`attachment://back.webp`).setURL(SOME_RANDOM_URL),
 		new EmbedBuilder().setImage(`attachment://back.webp`).setURL(SOME_RANDOM_URL),
 	];
-	const attachments = [
-		new AttachmentBuilder(`./db/images/back.webp`, { name: `back.webp` }),
-	];
+	const attachments = [new AttachmentBuilder(`./db/images/back.webp`, { name: `back.webp` })];
 
 	const cancelTradeButton = new ButtonBuilder()
 		.setCustomId('cancel_trade')
@@ -294,10 +284,10 @@ async function execute(interaction: ChatInputCommandInteraction) {
 		const temp = userBinder.cards[userCardIndex];
 		userBinder.cards[userCardIndex] = targetBinder.cards[targetCardIndex]!;
 		targetBinder.cards[targetCardIndex] = temp!;
-	
+
 		writeDb(userBinder);
 		writeDb(targetBinder);
-	
+
 		await disableTradeEmbed();
 		await interaction.followUp({
 			content: `<@${interaction.user.id}> successfully traded **${userCard.name}** with <@${targetUser.id}>'s **${targetCard.name}**.`,
@@ -354,7 +344,5 @@ function setTradeField(userId: string, card: CardEmbedData) {
 		value: `${card.name} - ${card.rarity} - ${card.price}€`,
 	};
 }
-
-
 
 export { data, execute };

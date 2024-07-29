@@ -13,7 +13,6 @@ import { RARITIES } from './variables.js';
 import { type BoosterPack } from './models/boosterpack.models.js';
 import { type Binder, type BinderCard } from './models/binder.models.js';
 
-
 const openBoosterPack = async (
 	interaction: ButtonInteraction,
 	binder: Binder,
@@ -108,7 +107,7 @@ const openBoosterPack = async (
 		i.user.id === interaction.user.id &&
 		(i.customId === 'add_to_binder_id_booster' || i.customId === 'sell_id_booster');
 	const collector = interaction.channel!.createMessageComponentCollector({
-		filter: (filter as any),
+		filter: filter as any,
 		time: 1800000,
 	});
 

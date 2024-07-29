@@ -8,19 +8,13 @@ import {
 	ChatInputCommandInteraction,
 	StringSelectMenuBuilder,
 	MessageComponentInteraction,
-	ButtonInteraction,
-	MessageActionRowComponentBuilder,
+	type MessageActionRowComponentBuilder,
 } from 'discord.js';
 import { getUserData } from '../db/dbFunctions.js';
 import { CARDS_PER_PAGE, BINDER_TIMEOUT, BINDER_COMMAND_COOLDOWN } from '../shared/variables.js';
 import { getCardData } from '../shared/card.js';
 import { add, check, remainingCooldown } from '../shared/cooldownManager.js';
-import {
-	createFilterMenu,
-	filterCards,
-	sortCards,
-	createSortMenu,
-} from '../shared/utils.js';
+import { createFilterMenu, filterCards, sortCards, createSortMenu } from '../shared/utils.js';
 import { type CardEmbedData } from '../shared/models/card.models.js';
 
 const COMMAND_NAME = 'binder';
@@ -52,8 +46,10 @@ async function execute(interaction: ChatInputCommandInteraction) {
 			ephemeral: true,
 		});
 	}
-	const cardDataWithIndex: [CardEmbedData, number][] = binder.cards
-        .map((card, index) => [getCardData(card)!, index]);
+	const cardDataWithIndex: [CardEmbedData, number][] = binder.cards.map((card, index) => [
+		getCardData(card)!,
+		index,
+	]);
 
 	const leftPage = new ButtonBuilder()
 		.setCustomId('leftPage_button_id_binder')
@@ -81,48 +77,54 @@ async function execute(interaction: ChatInputCommandInteraction) {
 	let activeSort: string | undefined;
 	let totalPages: number;
 
-	async function binderBuilder(filterMenuVisible = false, sortMenuVisible = false) {
-        filterMenuVisible = filterMenuVisible || ((activeFilters && activeFilters.length > 0) ?? false);
-        sortMenuVisible = sortMenuVisible || !!activeSort;
+	function binderBuilder(filterMenuVisible = false, sortMenuVisible = false) {
+		filterMenuVisible =
+			filterMenuVisible || ((activeFilters && activeFilters.length > 0) ?? false);
+		sortMenuVisible = sortMenuVisible || !!activeSort;
 
-        const filteredAndSortedCards = sortCards(
-            filterCards(cardDataWithIndex, activeFilters),
-            activeSort
-        );
+		const filteredAndSortedCards = sortCards(
+			filterCards(cardDataWithIndex, activeFilters),
+			activeSort,
+		);
 
-        totalPages = Math.ceil(filteredAndSortedCards.length / CARDS_PER_PAGE);
-        const startIndex = (currentPage - 1) * CARDS_PER_PAGE;
-        const endIndex = startIndex + CARDS_PER_PAGE;
-        const cardsOnPage = filteredAndSortedCards.slice(startIndex, endIndex);
+		totalPages = Math.ceil(filteredAndSortedCards.length / CARDS_PER_PAGE);
+		const startIndex = (currentPage - 1) * CARDS_PER_PAGE;
+		const endIndex = startIndex + CARDS_PER_PAGE;
+		const cardsOnPage = filteredAndSortedCards.slice(startIndex, endIndex);
 
-        const typeRarityFilterMenu = createFilterMenu(cardDataWithIndex.map(([card]) => card), activeFilters);
-        const filterMenuRow = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-            filterMenuVisible ? typeRarityFilterMenu : [] as any
-        );
-        const sortMenu = createSortMenu(activeSort);
-        const sortMenuRow = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(sortMenuVisible ? sortMenu : [] as any);
+		const typeRarityFilterMenu = createFilterMenu(
+			cardDataWithIndex.map(([card]) => card),
+			activeFilters,
+		);
+		const filterMenuRow = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+			filterMenuVisible ? typeRarityFilterMenu : ([] as any),
+		);
+		const sortMenu = createSortMenu(activeSort);
+		const sortMenuRow = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+			sortMenuVisible ? sortMenu : ([] as any),
+		);
 
-        const embed = new EmbedBuilder()
-            .setTitle(`${userName}'s Binder`)
-            .setFooter({ text: `Page ${currentPage}/${totalPages}` })
-            .setThumbnail(userAvatar)
-            .setTimestamp(Date.now())
-            .setURL(SOME_RANDOM_URL);
-        const imageEmbeds: EmbedBuilder[] = [];
-        const attachments: AttachmentBuilder[] = [];
-        cardsOnPage.forEach(([card, originalIndex]) => {
-            embed.addFields(
-                { name: `[${originalIndex + 1}] Name`, value: card.name, inline: true },
-                { name: 'Rarity', value: card.rarity, inline: true },
-                { name: 'Price', value: `${card.price}€`, inline: true },
-            );
-            attachments.push(
-                new AttachmentBuilder(`./db/images/${card.id}.jpg`, { name: `${card.id}.jpg` }),
-            );
-            imageEmbeds.push(
-                new EmbedBuilder().setImage(`attachment://${card.id}.jpg`).setURL(SOME_RANDOM_URL),
-            );
-        });
+		const embed = new EmbedBuilder()
+			.setTitle(`${userName}'s Binder`)
+			.setFooter({ text: `Page ${currentPage}/${totalPages}` })
+			.setThumbnail(userAvatar)
+			.setTimestamp(Date.now())
+			.setURL(SOME_RANDOM_URL);
+		const imageEmbeds: EmbedBuilder[] = [];
+		const attachments: AttachmentBuilder[] = [];
+		cardsOnPage.forEach(([card, originalIndex]) => {
+			embed.addFields(
+				{ name: `[${originalIndex + 1}] Name`, value: card.name, inline: true },
+				{ name: 'Rarity', value: card.rarity, inline: true },
+				{ name: 'Price', value: `${card.price}€`, inline: true },
+			);
+			attachments.push(
+				new AttachmentBuilder(`./db/images/${card.id}.jpg`, { name: `${card.id}.jpg` }),
+			);
+			imageEmbeds.push(
+				new EmbedBuilder().setImage(`attachment://${card.id}.jpg`).setURL(SOME_RANDOM_URL),
+			);
+		});
 
 		let description = ' ';
 		if (activeFilters?.length && cardsOnPage?.length) {
@@ -186,7 +188,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
 		let sortMenuVisible = false;
 
 		if (i.isButton()) {
-			const buttonInteraction = i as ButtonInteraction;
+			const buttonInteraction = i;
 			if (buttonInteraction.customId === 'filterIconButton_binder') {
 				if (activeFilters && activeFilters.length > 0) {
 					activeFilters = undefined;

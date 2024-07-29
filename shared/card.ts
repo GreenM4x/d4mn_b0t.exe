@@ -1,7 +1,6 @@
 import { type BinderCard } from './models/binder.models.js';
-import { type CardEmbedData, type CardData, type CardDetails } from './models/card.models.js';
+import { type CardEmbedData, type CardDetails } from './models/card.models.js';
 import { getCardInfo } from './state/global/global.state.js';
-
 
 const getCardData = (
 	binderCard: BinderCard,
@@ -47,7 +46,7 @@ const getRandomCard = () => {
 
 const getColorForCardType = (type: string): number => {
 	const typeColors: { [key: string]: number } = {
-    Normal: 0xffff00, // Yellow
+		Normal: 0xffff00, // Yellow
 		Effect: 0xffa500, // Orange
 		Ritual: 0xadd8e6, // Light blue
 		Fusion: 0xee82ee, // Violet

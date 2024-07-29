@@ -201,10 +201,10 @@ async function playTrivia(
 	const skippedArray: string[] = [];
 
 	const collector = interaction.channel?.createMessageCollector({ time: 30000 });
-	
-	client.triviaMap.set(guildId, { 
-		wasTriviaEndCalled: false, 
-		collector: collector!
+
+	client.triviaMap.set(guildId, {
+		wasTriviaEndCalled: false,
+		collector: collector!,
 	});
 
 	const title = normalizeValue(songsArray?.[index]?.title ?? '');

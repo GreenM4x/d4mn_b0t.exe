@@ -7,9 +7,9 @@ import {
 	ChatInputCommandInteraction,
 	ButtonInteraction,
 	EmbedBuilder,
-	CollectorFilter,
+	type CollectorFilter,
 	MessageComponentInteraction,
-	ReadonlyCollection,
+	Collection,
 } from 'discord.js';
 import { writeDb, getUserData } from '../db/dbFunctions.js';
 import { getColorForCardType, getRandomCard } from '../shared/card.js';
@@ -163,7 +163,7 @@ async function handleSell(
 
 async function handleCollectorEnd(
 	interaction: ChatInputCommandInteraction,
-	collected: ReadonlyCollection<string, MessageComponentInteraction>,
+	collected: Collection<string, MessageComponentInteraction>,
 	embed: EmbedBuilder,
 ) {
 	await interaction.editReply({

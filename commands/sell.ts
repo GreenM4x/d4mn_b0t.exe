@@ -6,8 +6,8 @@ import {
 	AttachmentBuilder,
 	ChatInputCommandInteraction,
 	ButtonInteraction,
-	MessageActionRowComponentBuilder,
-	CollectorFilter,
+	type MessageActionRowComponentBuilder,
+	type CollectorFilter,
 	MessageComponentInteraction,
 	EmbedBuilder,
 } from 'discord.js';

@@ -8,8 +8,8 @@ import {
 	ChatInputCommandInteraction,
 	ButtonInteraction,
 	StringSelectMenuInteraction,
-	MessageActionRowComponentBuilder,
-	CollectorFilter,
+	type MessageActionRowComponentBuilder,
+	type CollectorFilter,
 	MessageComponentInteraction,
 } from 'discord.js';
 import seedrandom from 'seedrandom';
@@ -29,7 +29,7 @@ const data = new SlashCommandBuilder().setName('shop').setDescription('Buy and o
 
 async function execute(interaction: ChatInputCommandInteraction) {
 	const boosterPacks = boosterPacksData.map(
-		(packData): BoosterPack => ({
+		(packData: any): BoosterPack => ({
 			id: packData.code,
 			name: packData.name,
 			price: packData.price,

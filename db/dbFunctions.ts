@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { Binder } from '../shared/models/binder.models.js';
+import { type Binder } from '../shared/models/binder.models.js';
 
 function readDb(dbName: string = 'db.json'): Binder[] {
 	try {
