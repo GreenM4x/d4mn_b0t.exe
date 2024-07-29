@@ -4,14 +4,21 @@ import {
 	ButtonBuilder,
 	ButtonStyle,
 	AttachmentBuilder,
+	ChatInputCommandInteraction,
+	ButtonInteraction,
+	MessageActionRowComponentBuilder,
+	CollectorFilter,
+	MessageComponentInteraction,
 } from 'discord.js';
 import { writeDb, getUserData } from '../db/dbFunctions.js';
 import { getCardData, getColorForCardType } from '../shared/card.js';
-import { createEmbed } from '../shared/utils.js';
 import { GIFT_TIMEOUT } from '../shared/variables.js';
 import { add, check, remainingCooldown } from '../shared/cooldownManager.js';
+import { createEmbed } from '../shared/utils.js';
+import { type BinderCard, type Binder } from '../shared/models/binder.models.js';
 
 const COMMAND_NAME = 'gift';
+const SOME_RANDOM_URL = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
 
 const data = new SlashCommandBuilder()
 	.setName(COMMAND_NAME)
@@ -29,7 +36,7 @@ const data = new SlashCommandBuilder()
 			.setRequired(true),
 	);
 
-async function execute(interaction) {
+async function execute(interaction: ChatInputCommandInteraction) {
 	if (check(interaction.user.id, COMMAND_NAME)) {
 		return await interaction.reply({
 			content: `You are on a cooldown. ${remainingCooldown(
@@ -41,8 +48,8 @@ async function execute(interaction) {
 	}
 	add(interaction.user.id, COMMAND_NAME, GIFT_TIMEOUT);
 
-	const cardIndex = interaction.options.getInteger('card_index');
-	const recipient = interaction.options.getUser('recipient');
+	const cardIndex = interaction.options.getInteger('card_index', true);
+	const recipient = interaction.options.getUser('recipient', true);
 	const recipientId = recipient.id;
 
 	if (interaction.user.id === recipientId) {
@@ -60,8 +67,15 @@ async function execute(interaction) {
 		});
 	}
 
-	const cardToGift = senderBinder.cards[cardIndex - 1];
+	const cardToGift = senderBinder.cards[cardIndex - 1]!;
 	const cardData = getCardData(cardToGift);
+
+	if (!cardData) {
+		return await interaction.reply({
+			content: 'Error retrieving card data. Please try again.',
+			ephemeral: true,
+		});
+	}
 
 	const accept = new ButtonBuilder()
 		.setCustomId('accept_gift_button_id_gift')
@@ -73,7 +87,10 @@ async function execute(interaction) {
 		.setLabel('Decline')
 		.setStyle(ButtonStyle.Danger);
 
-	const actionRow = new ActionRowBuilder().addComponents(accept, decline);
+	const actionRow = new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
+		accept,
+		decline,
+	);
 
 	const embed = createEmbed({
 		title: `${interaction.user.username} is gifting you a card!`,
@@ -97,7 +114,7 @@ async function execute(interaction) {
 				inline: true,
 			},
 		],
-		url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+		url: SOME_RANDOM_URL,
 	});
 
 	await interaction.reply({
@@ -111,41 +128,33 @@ async function execute(interaction) {
 		],
 	});
 
-	const filter = (i) => i.customId.includes('id_gift');
-	const collector = interaction.channel.createMessageComponentCollector({
+	const filter: CollectorFilter<[MessageComponentInteraction]> = (
+		i: MessageComponentInteraction,
+	) => i.customId.includes('id_gift');
+	const collector = interaction.channel!.createMessageComponentCollector({
 		filter,
 		time: GIFT_TIMEOUT,
-		maxButtons: 2,
 	});
 
-	collector.on('collect', async (i) => {
+	collector.on('collect', async (i: ButtonInteraction) => {
 		if (i.user.id !== recipientId) {
 			await i.reply({ content: 'Wooow buddy, this is not your gift!', ephemeral: true });
 			return;
 		}
 
 		if (i.customId === 'accept_gift_button_id_gift') {
-			senderBinder.cards.splice(cardIndex - 1, 1);
-			senderBinder.stats.cardsGifted++;
-			writeDb(senderBinder);
-
-			const recipientBinder = getUserData(recipientId) || {
-				userId: recipientId,
-				cards: [],
-			};
-			recipientBinder.cards.push(cardToGift);
-			writeDb(recipientBinder);
-
-			await i.update({
-				content: `Congratulations, <@${recipientId}>! You received the card!`,
-				components: [],
-			});
+			await handleAcceptGift(
+				i,
+				interaction,
+				senderBinder,
+				cardIndex,
+				cardToGift,
+				recipientId,
+			);
 		} else if (i.customId === 'decline_gift_button_id_gift') {
-			await i.update({
-				content: `<@${recipientId}> just declined a gift. LOL`,
-				components: [],
-			});
+			await handleDeclineGift(i, recipientId);
 		}
+		collector.stop();
 	});
 
 	collector.on('end', async (collected) => {
@@ -154,7 +163,54 @@ async function execute(interaction) {
 				content: `The gift offer has expired. Sucks for you, <@${recipientId}>!`,
 				components: [],
 			});
+		} else {
+			await interaction.editReply({
+				components: [],
+			});
 		}
+	});
+}
+
+async function handleAcceptGift(
+	i: ButtonInteraction,
+	interaction: ChatInputCommandInteraction,
+	senderBinder: Binder,
+	cardIndex: number,
+	cardToGift: BinderCard,
+	recipientId: string,
+) {
+	senderBinder.cards.splice(cardIndex - 1, 1);
+	senderBinder.stats.cardsGifted++;
+	writeDb(senderBinder);
+
+	const recipientBinder = getUserData(recipientId) || {
+		userId: recipientId,
+		cards: [],
+		stats: {
+			cardsAddedToBinder: 0,
+			cardsDiscarded: 0,
+			cardsGifted: 0,
+			cardsSold: 0,
+		},
+		currency: 0,
+		dailyPurchases: { date: new Date().toLocaleDateString(), packs: {} },
+	};
+	recipientBinder.cards.push(cardToGift);
+	writeDb(recipientBinder);
+
+	await i.update({
+		content: `Congratulations, <@${recipientId}>! You received the card!`,
+		components: [],
+	});
+	await interaction.followUp({
+		content: `<@${interaction.user.id}> successfully gifted their card to <@${recipientId}>!`,
+	});
+}
+
+async function handleDeclineGift(i: ButtonInteraction, recipientId: string) {
+	await i.update({
+		content: `<@${recipientId}> just declined a gift. LOL`,
+		components: [],
 	});
 }
 
