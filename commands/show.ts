@@ -1,7 +1,13 @@
-import { AttachmentBuilder, SlashCommandBuilder } from 'discord.js';
+import {
+	AttachmentBuilder,
+	SlashCommandBuilder,
+	ChatInputCommandInteraction,
+	EmbedBuilder,
+} from 'discord.js';
 import { getCardData, getColorForCardType } from '../shared/card.js';
 import { getUserData } from '../db/dbFunctions.js';
 import { createEmbed } from '../shared/utils.js';
+import { type CardEmbedData } from '../shared/models/card.models.js';
 
 const COMMAND_NAME = 'show';
 
@@ -11,22 +17,24 @@ const data = new SlashCommandBuilder()
 	.addStringOption((option) =>
 		option.setName('card_id').setDescription('The ID of the card to show').setRequired(true),
 	);
-async function execute(interaction) {
-	const cardIndex = +interaction.options.getString('card_id') - 1;
+
+async function execute(interaction: ChatInputCommandInteraction) {
+	const cardIndex = parseInt(interaction.options.getString('card_id', true)) - 1;
 	const binder = await getUserData(interaction.user.id);
+
 	if (!binder || binder.cards.length === 0) {
 		return await interaction.reply({
 			content: "You don't have any cards. Try the /draw command first",
 			ephemeral: true,
 		});
-	} else if (binder.cards.length > 0 && binder.cards[cardIndex] === undefined) {
+	} else if (cardIndex < 0 || cardIndex >= binder.cards.length) {
 		return await interaction.reply({
 			content: "You don't have this card.",
 			ephemeral: true,
 		});
 	}
 
-	const card = binder.cards[cardIndex];
+	const card = binder.cards[cardIndex]!;
 	const cardData = getCardData(card);
 
 	if (!cardData) {
@@ -36,17 +44,7 @@ async function execute(interaction) {
 		});
 	}
 
-	const cardEmbed = createEmbed({
-		title: cardData.name,
-		color: getColorForCardType(cardData.type),
-		fields: [
-			{ name: 'Type', value: cardData.type, inline: true },
-			{ name: 'Rarity', value: cardData.rarity, inline: true },
-			{ name: 'Price', value: `${cardData.price}€`, inline: true },
-		],
-		imageUrl: cardData.img,
-		footer: { text: `This card belongs to ${interaction.user.username}` },
-	});
+	const cardEmbed = createCardEmbed(cardData, interaction.user.username);
 
 	const cardAttachment = new AttachmentBuilder(`./db/images/${cardData.id}.jpg`, {
 		name: `${cardData.id}.jpg`,
@@ -55,6 +53,20 @@ async function execute(interaction) {
 	await interaction.reply({
 		embeds: [cardEmbed],
 		files: [cardAttachment],
+	});
+}
+
+function createCardEmbed(cardData: CardEmbedData, username: string): EmbedBuilder {
+	return createEmbed({
+		title: cardData.name,
+		color: getColorForCardType(cardData.type),
+		fields: [
+			{ name: 'Type', value: cardData.type, inline: true },
+			{ name: 'Rarity', value: cardData.rarity, inline: true },
+			{ name: 'Price', value: `${cardData.price}€`, inline: true },
+		],
+		imageUrl: cardData.img,
+		footer: { text: `This card belongs to ${username}` },
 	});
 }
 

@@ -14,8 +14,8 @@ import {
 import { getUserData, writeDb } from '../db/dbFunctions.js';
 import { getColorForCardType, getCardData } from '../shared/card.js';
 import { createEmbed } from '../shared/utils.js';
-import { Binder } from '../shared/models/binder.models.js';
-import { CardEmbedData } from '../shared/models/card.models.js';
+import { type Binder } from '../shared/models/binder.models.js';
+import { type CardEmbedData } from '../shared/models/card.models.js';
 
 const data = new SlashCommandBuilder()
 	.setName('sell')
