@@ -164,6 +164,13 @@ async function playTrivia(
 	index: number,
 ) {
 	const client = interaction.client as ExtendedClient;
+	const guildId = interaction.guildId;
+
+	if (!guildId || !client.quizActive[guildId]) {
+		console.log('Quiz stopped or guild not found.');
+		return;
+	}
+
 	if (index >= tracks.length) {
 		const finalEmbed = new EmbedBuilder()
 			.setColor(6345206)
@@ -171,7 +178,8 @@ async function playTrivia(
 			.setDescription(getLeaderBoard(Array.from(score.entries())));
 		await interaction.channel?.send({ embeds: [finalEmbed] });
 		void client.music?.leaveVoiceChannel(player.guildId);
-		client.triviaMap.delete((interaction.channel as GuildChannel).guildId);
+		client.triviaMap.delete(guildId);
+		client.quizActive[guildId] = false;
 		return;
 	}
 
@@ -193,6 +201,12 @@ async function playTrivia(
 	const skippedArray: string[] = [];
 
 	const collector = interaction.channel?.createMessageCollector({ time: 30000 });
+	
+	client.triviaMap.set(guildId, { 
+		wasTriviaEndCalled: false, 
+		collector: collector!
+	});
+
 	const title = normalizeValue(songsArray?.[index]?.title ?? '');
 	const singers: string[] | undefined = songsArray[index]?.singers.map(normalizeValue);
 	collector?.on('collect', (msg) => {
@@ -259,7 +273,7 @@ async function playTrivia(
 	collector?.on('end', async (_, reason) => {
 		const guildId = (interaction.channel as GuildChannel).guildId;
 		const trivia = client.triviaMap.get(guildId);
-		if (trivia?.wasTriviaEndCalled) {
+		if (!client.quizActive[guildId] || trivia?.wasTriviaEndCalled) {
 			client.triviaMap.delete(guildId);
 			return;
 		}
