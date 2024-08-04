@@ -1,43 +1,47 @@
-const timeouts = new Map();
+type CooldownKey = `${string}_${string}`;
 
-function check(userId, command) {
-	const key = `${userId}_${command}`;
-	const cooldownExpiration = timeouts.get(key);
+const timeouts: Map<CooldownKey, number> = new Map();
 
-	if (cooldownExpiration && cooldownExpiration > Date.now()) {
-		return true;
-	}
+function check(userId: string, command: string): boolean {
+    const key: CooldownKey = `${userId}_${command}`;
+    const cooldownExpiration = timeouts.get(key);
 
-	return false;
+    if (cooldownExpiration && cooldownExpiration > Date.now()) {
+        return true;
+    }
+
+    return false;
 }
 
-function add(userId, command, cooldownDuration) {
-	const key = `${userId}_${command}`;
-	const cooldownExpiration = Date.now() + cooldownDuration;
-	timeouts.set(key, cooldownExpiration);
+function add(userId: string, command: string, cooldownDuration: number): void {
+    const key: CooldownKey = `${userId}_${command}`;
+    const cooldownExpiration = Date.now() + cooldownDuration;
+    timeouts.set(key, cooldownExpiration);
 
-	setTimeout(() => remove(userId, command), cooldownDuration);
+    setTimeout(() => remove(userId, command), cooldownDuration);
 }
 
-function remove(userId, command) {
-	const key = `${userId}_${command}`;
-	timeouts.delete(key);
+function remove(userId: string, command: string): void {
+    const key: CooldownKey = `${userId}_${command}`;
+    timeouts.delete(key);
 }
 
-function remainingCooldown(userId, command) {
-	const key = `${userId}_${command}`;
-	const cooldownExpiration = timeouts.get(key);
+function remainingCooldown(userId: string, command: string): string {
+    const key: CooldownKey = `${userId}_${command}`;
+    const cooldownExpiration = timeouts.get(key);
 
-	if (!cooldownExpiration) {
-		return 0;
-	}
+    if (!cooldownExpiration) {
+        return '0s';
+    }
 
-	const remainingTime = cooldownExpiration - Date.now();
-	const seconds = Math.floor(remainingTime / 1000) % 60;
-	const minutes = Math.floor(remainingTime / (1000 * 60)) % 60;
-	const formattedTime = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+    const remainingTime = cooldownExpiration - Date.now();
+    if (remainingTime <= 0) {
+        return '0s';
+    }
 
-	return remainingTime > 0 ? formattedTime : '0s';
+    const seconds = Math.floor(remainingTime / 1000) % 60;
+    const minutes = Math.floor(remainingTime / (1000 * 60)) % 60;
+    return minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
 }
 
 export { check, add, remove, remainingCooldown };
