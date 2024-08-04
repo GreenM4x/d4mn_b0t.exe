@@ -13,7 +13,7 @@ import { Shoukaku, Connectors } from 'shoukaku';
 import ExtendedClient from './shared/music/ExtendedClient.js';
 import { setBoosterPackInfo, setCardInfo } from './shared/state/global/global.state.js';
 import { type CardData } from './shared/models/card.models.js';
-import { BoosterPack } from './shared/models/boosterpack.models.js';
+import { BoosterPackData } from './shared/models/boosterpack.models.js';
 
 type CustomCommand = {
 	data: SlashCommandBuilder;
@@ -48,7 +48,7 @@ async function loadBoosterPackInfo(): Promise<void> {
 	const __dirname = import.meta.dirname;
 	const boosterPackInfoPath = path.join(__dirname, 'db', 'booster_packs', 'data.json');
 	const boosterPackInfoData = await fs.readFile(boosterPackInfoPath, 'utf-8');
-	setBoosterPackInfo(JSON.parse(boosterPackInfoData) as BoosterPack[]);
+	setBoosterPackInfo(JSON.parse(boosterPackInfoData) as BoosterPackData[]);
 }
 
 async function loadCommands() {

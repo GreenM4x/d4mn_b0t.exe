@@ -36,7 +36,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
 	}
 	add(interaction.user.id, COMMAND_NAME, BINDER_COMMAND_COOLDOWN);
 
-	const binder = await getUserData(interaction.user.id);
+	const binder = getUserData(interaction.user.id);
 	const userName = interaction.user.username;
 	const userAvatar = interaction.user.displayAvatarURL();
 
@@ -97,11 +97,11 @@ async function execute(interaction: ChatInputCommandInteraction) {
 			activeFilters,
 		);
 		const filterMenuRow = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-			filterMenuVisible ? typeRarityFilterMenu : ([] as any),
+			filterMenuVisible ? typeRarityFilterMenu : ([] as never),
 		);
 		const sortMenu = createSortMenu(activeSort);
 		const sortMenuRow = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-			sortMenuVisible ? sortMenu : ([] as any),
+			sortMenuVisible ? sortMenu : ([] as never),
 		);
 
 		const embed = new EmbedBuilder()
@@ -170,7 +170,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
 		};
 	}
 
-	await interaction.reply(await binderBuilder());
+	await interaction.reply(binderBuilder());
 
 	const filter = (i: MessageComponentInteraction) =>
 		i.user.id === interaction.user.id &&
@@ -219,7 +219,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
 			}
 		}
 
-		await interaction.editReply(await binderBuilder(filterMenuVisible, sortMenuVisible));
+		await interaction.editReply(binderBuilder(filterMenuVisible, sortMenuVisible));
 	});
 
 	collector.on('end', async () => {
