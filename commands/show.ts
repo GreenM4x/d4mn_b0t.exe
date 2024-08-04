@@ -20,7 +20,7 @@ const data = new SlashCommandBuilder()
 
 async function execute(interaction: ChatInputCommandInteraction) {
 	const cardIndex = parseInt(interaction.options.getString('card_id', true)) - 1;
-	const binder = await getUserData(interaction.user.id);
+	const binder = getUserData(interaction.user.id);
 
 	if (!binder || binder.cards.length === 0) {
 		return await interaction.reply({

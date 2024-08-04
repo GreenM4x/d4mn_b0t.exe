@@ -107,7 +107,7 @@ const openBoosterPack = async (
 		i.user.id === interaction.user.id &&
 		(i.customId === 'add_to_binder_id_booster' || i.customId === 'sell_id_booster');
 	const collector = interaction.channel!.createMessageComponentCollector({
-		filter: filter as any,
+		filter: filter as never,
 		time: 1800000,
 	});
 

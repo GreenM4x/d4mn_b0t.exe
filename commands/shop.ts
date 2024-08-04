@@ -19,7 +19,7 @@ import { MAX_PURCHASES_PER_PACK_PER_DAY, MAX_BOOSTERS_IN_SHOP } from '../shared/
 import { openBoosterPack } from '../shared/booster-pack.js';
 import path from 'path';
 import { promises as fs } from 'fs';
-import { type BoosterPack } from '../shared/models/boosterpack.models.js';
+import { BoosterPackData, type BoosterPack } from '../shared/models/boosterpack.models.js';
 import { type Binder } from '../shared/models/binder.models.js';
 import { getBoosterPackInfo } from '../shared/state/global/global.state.js';
 
@@ -30,7 +30,7 @@ const data = new SlashCommandBuilder().setName('shop').setDescription('Buy and o
 async function execute(interaction: ChatInputCommandInteraction) {
 	const boosterPacksData = getBoosterPackInfo()!;
 	const boosterPacks = boosterPacksData.map(
-		(packData: any): BoosterPack => ({
+		(packData: BoosterPackData): BoosterPack => ({
 			id: packData.code,
 			name: packData.name,
 			price: packData.price,

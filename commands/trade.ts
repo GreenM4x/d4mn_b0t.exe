@@ -47,8 +47,8 @@ async function execute(interaction: ChatInputCommandInteraction) {
 		});
 	}
 
-	const userBinder = await getUserData(interaction.user.id);
-	const targetBinder = await getUserData(targetUser.id);
+	const userBinder = getUserData(interaction.user.id);
+	const targetBinder = getUserData(targetUser.id);
 
 	if (!userBinder || userBinder.cards.length === 0) {
 		return await interaction.reply({

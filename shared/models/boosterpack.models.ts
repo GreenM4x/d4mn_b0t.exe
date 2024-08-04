@@ -10,3 +10,14 @@ export interface BoosterPack {
 		rarity: string;
 	}[];
 }
+
+export interface BoosterPackData {
+	name: string;
+	cards: {
+		id: number;
+		chance: number;
+		rarity: string;
+	}[];
+	code: string;
+	price: number;
+}
