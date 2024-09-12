@@ -63,7 +63,7 @@ async function execute(interaction: ChatInputCommandInteraction<CacheType>): Pro
 	const shuffledAgents = shuffle(allValorantAgents);
 	const team = shuffledAgents.slice(0, members?.size ?? 5);
 
-	let message = 'A freshly baked Valorant team\n';
+	let message = 'Your freshly baked Valorant team\n';
 	let i = 1;
 	members?.forEach((member) => {
 		const agent = team[i - 1] ?? 'you choose 🩵';
