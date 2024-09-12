@@ -1,19 +1,6 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 import fetch from 'node-fetch';
-
-interface TriviaQuestion {
-	category: string;
-	type: string;
-	difficulty: string;
-	question: string;
-	correct_answer: string;
-	incorrect_answers: string[];
-}
-
-interface TriviaResponse {
-	response_code: number;
-	results: TriviaQuestion[];
-}
+import { TriviaQuestion, TriviaResponse } from '../shared/models/trivia.model';
 
 const data = new SlashCommandBuilder().setName('trivia').setDescription('Start a Trivia Quiz');
 
@@ -21,13 +8,17 @@ async function execute(interaction: ChatInputCommandInteraction): Promise<void> 
 	await interaction.deferReply({ ephemeral: true });
 
 	try {
-		const response: any = await fetch('https://opentdb.com/api.php?amount=5&type=multiple');
-		const data: TriviaResponse = await response.json();
+		// Fetch the trivia response from the API
+		const response = await fetch('https://opentdb.com/api.php?amount=5&type=multiple');
+		const jsonData = await response.json(); // jsonData is of type unknown by default
 
+		// Assert that the response is of type TriviaResponse
+		const data: TriviaResponse = jsonData as TriviaResponse; // Explicit type assertion
+		// Check if the response code is 0 (success)
 		if (data.response_code === 0) {
 			let questionToDisplay = '';
 			data.results.forEach((element) => {
-				questionToDisplay = prepareQuestion(element);
+				questionToDisplay += prepareQuestion(element) + '\n\n'; // Concatenate all questions
 			});
 			await interaction.editReply(questionToDisplay);
 		} else {
@@ -42,7 +33,8 @@ async function execute(interaction: ChatInputCommandInteraction): Promise<void> 
 }
 
 function prepareQuestion(question: TriviaQuestion): string {
-	return question.question;
+	// Format the question for display
+	return `**Category**: ${question.category}\n**Difficulty**: ${question.difficulty}\n**Question**: ${question.question}\n`;
 }
 
 export { data, execute };
