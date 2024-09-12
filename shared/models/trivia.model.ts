@@ -1,4 +1,3 @@
-// TypeScript model based on the API response structure
 export interface TriviaQuestion {
 	category: string;
 	type: string;
