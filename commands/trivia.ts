@@ -12,7 +12,7 @@ import {
 import fetch from 'node-fetch';
 import type { TriviaQuestion, TriviaResponse } from '../shared/models/trivia.model.js';
 import { shuffle } from '../shared/utils.js';
-import { DRAW_TIMEOUT } from '../shared/variables.js';
+import { TRIVIA_TIMEOUT } from '../shared/variables.js';
 
 const data = new SlashCommandBuilder().setName('trivia').setDescription('Start a Trivia Quiz');
 
@@ -54,13 +54,26 @@ async function execute(interaction: ChatInputCommandInteraction): Promise<void> 
 		// Assert that the response is of type TriviaResponse
 		const data: TriviaResponse = jsonData as TriviaResponse; // Explicit type assertion
 		// Check if the response code is 0 (success)
-		if (data.response_code === 0) {
-			let randomAnswer: string[] | undefined = [];
-			const question = data.results[1];
-			randomAnswer = question?.incorrect_answers.concat([question.correct_answer]) ?? [];
-			randomAnswer = shuffle(randomAnswer);
+		if (data.response_code === 0 && data.results.length > 0) {
+			let score = 0;
+			let currentQuestionIndex = 0;
 
-			const questionToDisplay: EmbedBuilder = prepareQuestion(data.results[1], randomAnswer);
+			// Ensure the question exists before moving forward
+			let question: TriviaQuestion | undefined = data.results[currentQuestionIndex];
+
+			// If no question, handle the error case
+			if (!question) {
+				await interaction.editReply(
+					'Failed to load trivia questions. Please try again later.',
+				);
+				return;
+			}
+
+			let randomAnswer: string[] = shuffle(
+				question.incorrect_answers.concat([question.correct_answer]),
+			);
+
+			let questionToDisplay: EmbedBuilder = prepareQuestion(question, randomAnswer);
 			await interaction.editReply({
 				embeds: [questionToDisplay],
 				components: [actionRow],
@@ -74,11 +87,52 @@ async function execute(interaction: ChatInputCommandInteraction): Promise<void> 
 
 			const collector = interaction.channel!.createMessageComponentCollector({
 				filter,
-				time: DRAW_TIMEOUT,
+				time: TRIVIA_TIMEOUT,
 			});
 
 			collector.on('collect', async (i: ButtonInteraction) => {
-				await checkForWin(i, randomAnswer, question);
+				const correct = await checkForWin(i, randomAnswer, question);
+				if (correct) score++; // Increment score if correct
+
+				currentQuestionIndex++;
+
+				if (currentQuestionIndex < data.results.length) {
+					// Get the next question and ensure it's defined
+					question = data.results[currentQuestionIndex];
+					if (!question) {
+						await interaction.editReply('Failed to load the next question.');
+						collector.stop();
+						return;
+					}
+
+					randomAnswer = shuffle(
+						question.incorrect_answers.concat([question.correct_answer]),
+					);
+
+					// Update with the new question
+					questionToDisplay = prepareQuestion(question, randomAnswer);
+					await interaction.editReply({
+						content: `Your score: ${score}/${currentQuestionIndex}`,
+						embeds: [questionToDisplay],
+						components: [actionRow],
+					});
+				} else {
+					// End of quiz
+					await interaction.editReply({
+						content: `Quiz over! Your final score is ${score}/${data.results.length}.`,
+						embeds: [],
+						components: [],
+					});
+					collector.stop(); // End the collector
+				}
+			});
+
+			collector.on('end', async () => {
+				await interaction.editReply({
+					content: `Time's up! Your final score is ${score}/${data.results.length}.`,
+					embeds: [],
+					components: [],
+				});
 			});
 		} else {
 			await interaction.editReply('Failed to load trivia questions. Please try again later.');
@@ -95,61 +149,31 @@ async function checkForWin(
 	i: ButtonInteraction,
 	randomAnswer: string[],
 	question: TriviaQuestion | undefined,
-) {
+): Promise<boolean> {
+	let isCorrect = false;
 	switch (i.customId) {
 		case 'option_1':
-			if (randomAnswer[0] === question?.correct_answer) {
-				await i.update({
-					content: `You got it! The correct answer is: ${question?.correct_answer}`,
-					components: [],
-				});
-			} else {
-				await i.update({
-					content: `Wrong answer! The correct answer was: ${question?.correct_answer}`,
-					components: [],
-				});
-			}
+			isCorrect = randomAnswer[0] === question?.correct_answer;
 			break;
 		case 'option_2':
-			if (randomAnswer[1] === question?.correct_answer) {
-				await i.update({
-					content: `You got it! The correct answer is: ${question?.correct_answer}`,
-					components: [],
-				});
-			} else {
-				await i.update({
-					content: `Wrong answer! The correct answer was: ${question?.correct_answer}`,
-					components: [],
-				});
-			}
+			isCorrect = randomAnswer[1] === question?.correct_answer;
 			break;
 		case 'option_3':
-			if (randomAnswer[2] === question?.correct_answer) {
-				await i.update({
-					content: `You got it! The correct answer is: ${question?.correct_answer}`,
-					components: [],
-				});
-			} else {
-				await i.update({
-					content: `Wrong answer! The correct answer was: ${question?.correct_answer}`,
-					components: [],
-				});
-			}
+			isCorrect = randomAnswer[2] === question?.correct_answer;
 			break;
 		case 'option_4':
-			if (randomAnswer[3] === question?.correct_answer) {
-				await i.update({
-					content: `You got it! The correct answer is: ${question?.correct_answer}`,
-					components: [],
-				});
-			} else {
-				await i.update({
-					content: `Wrong answer! The correct answer was: ${question?.correct_answer}`,
-					components: [],
-				});
-			}
+			isCorrect = randomAnswer[3] === question?.correct_answer;
 			break;
 	}
+
+	await i.update({
+		content: isCorrect
+			? `You got it! The correct answer is: ${question?.correct_answer}`
+			: `Wrong answer! The correct answer was: ${question?.correct_answer}`,
+		components: [],
+	});
+
+	return isCorrect;
 }
 
 function prepareQuestion(
@@ -157,7 +181,7 @@ function prepareQuestion(
 	randomAnswer: string[],
 ): EmbedBuilder {
 	const embed = new EmbedBuilder()
-		.setTitle('Question [Number]')
+		.setTitle('Question')
 		.setDescription('React with the symbol of the correct answer.')
 		.addFields(
 			{
@@ -167,39 +191,33 @@ function prepareQuestion(
 			},
 			{
 				name: 'Question:',
-				value: `${question?.question}`,
+				value: `${modifyString(question?.question)}`,
 				inline: false,
 			},
 			{
-				name: '🔵 ' + randomAnswer[0],
+				name: '🔵 ' + modifyString(randomAnswer[0]),
 				value: '\u200B',
 				inline: false,
 			},
 			{
-				name: '🟩 ' + randomAnswer[1],
+				name: '🟩 ' + modifyString(randomAnswer[1]),
 				value: '\u200B',
 				inline: false,
 			},
 			{
-				name: '🔶 ' + randomAnswer[2],
+				name: '🔶 ' + modifyString(randomAnswer[2]),
 				value: '\u200B',
 				inline: false,
 			},
 			{
-				name: '❤️ ' + randomAnswer[3],
+				name: '❤️ ' + modifyString(randomAnswer[3]),
 				value: '\u200B',
-				inline: false,
-			},
-			{
-				name: 'Answer',
-				value: `${question?.correct_answer}`,
 				inline: false,
 			},
 		)
 		.setColor('#ffffff')
 		.setTimestamp();
 
-	// Format the question for display
 	return embed;
 }
 
@@ -207,7 +225,7 @@ function modifyString(input: string | undefined): string {
 	return (
 		input
 			?.replaceAll('&quot;', `"`)
-			.replaceAll('&#039;', `'`)
+			.replaceAll('&#039', `'`)
 			.replaceAll('&sup', '^')
 			.replaceAll('&amp;', '&') ?? ''
 	);
