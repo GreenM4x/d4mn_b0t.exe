@@ -98,6 +98,8 @@ jobs:
           GUILD_ID: ${{ secrets.GUILD_ID }}
           LAVALINK_HOST: ${{ secrets.LAVALINK_HOST }}
           LAVALINK_PW: ${{ secrets.LAVALINK_PW }}
+          SEARCH_API_KEY: ${{ secrets.SEARCH_API_KEY }}
+          SEARCH_ENGINE_ID: ${{ secrets.SEARCH_ENGINE_ID }} 
 
       - name: Remove old unused image
         run: docker image prune -a -f --filter "label=name=d4mn_bot.exe"

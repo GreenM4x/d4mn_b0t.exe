@@ -12,6 +12,8 @@ services:
       - GUILD_ID=${GUILD_ID}
       - LAVALINK_HOST=${LAVALINK_HOST}
       - LAVALINK_PW=${LAVALINK_PW}
+      - SEARCH_API_KEY=${SEARCH_API_KEY}
+      - SEARCH_ENGINE_ID=${SEARCH_ENGINE_ID}
     restart: unless-stopped
     labels:
       traefik.enable: false
