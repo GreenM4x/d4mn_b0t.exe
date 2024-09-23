@@ -148,7 +148,10 @@ async function playCountdown(
 
 async function playCountdownTrack(player: Player) {
 	await player.playTrack({
-		track: 'QAAA0AMANDEwIFNlY29uZCBDb3VudERvd24gVGltZXIgV2l0aCBWb2ljZSBUbyBTdGFydCBBIFNob3cADlJhaW5ib3cgVGltZXJzAAAAAAAAxzgAC0hfYkIwc0FxTE5nAAEAK2h0dHBzOi8vd3d3LnlvdXR1YmUuY29tL3dhdGNoP3Y9SF9iQjBzQXFMTmcBADBodHRwczovL2kueXRpbWcuY29tL3ZpL0hfYkIwc0FxTE5nL21xZGVmYXVsdC5qcGcAAAd5b3V0dWJlAAAAAAAAAAA=',
+		track: {
+			encoded:
+				'QAAA0AMANDEwIFNlY29uZCBDb3VudERvd24gVGltZXIgV2l0aCBWb2ljZSBUbyBTdGFydCBBIFNob3cADlJhaW5ib3cgVGltZXJzAAAAAAAAxzgAC0hfYkIwc0FxTE5nAAEAK2h0dHBzOi8vd3d3LnlvdXR1YmUuY29tL3dhdGNoP3Y9SF9iQjBzQXFMTmcBADBodHRwczovL2kueXRpbWcuY29tL3ZpL0hfYkIwc0FxTE5nL21xZGVmYXVsdC5qcGcAAAd5b3V0dWJlAAAAAAAAAAA=',
+		},
 	});
 	await player.seekTo(19000);
 	await player.setGlobalVolume(80);
@@ -192,7 +195,7 @@ async function playTrivia(
 		return;
 	}
 	const randomStart = Math.floor(Math.random() * (maxStart - minStart + 1)) + minStart;
-	await player.playTrack({ track: currentTrack.encoded });
+	await player.playTrack({ track: { encoded: currentTrack.encoded } });
 	console.log('Playing track:', currentTrack.info?.title + ' - ' + currentTrack.info?.author);
 	await player.seekTo(randomStart);
 
