@@ -17,6 +17,10 @@ def check_youtube_video_status(video_url):
                 return "unavailable"
             elif "ist privat" in page_content:
                 return "private"
+            elif "urheberrechtlichen Gründen gesperrt" in page_content:
+                return "unavailable"
+            elif "UNPLAYABLE" in page_content:
+                return "unavailable"
             else:
                 return "available"
         else:
@@ -43,7 +47,7 @@ def filter_videos(json_data):
     
     return available_videos
 
-with open('3k-songs', 'r', encoding='utf-8') as file:
+with open('3k-songs.json', 'r', encoding='utf-8') as file:
     json_data = json.load(file)
 
 filtered_videos = filter_videos(json_data)
