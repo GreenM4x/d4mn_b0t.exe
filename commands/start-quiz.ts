@@ -12,6 +12,7 @@ import {
 	getLeaderBoard,
 	normalizeValue,
 	capitalizeWords,
+	similarity,
 } from '../shared/music/utils.js';
 import type { Player, Track, TrackResult } from 'shoukaku';
 import ExtendedClient from '../shared/music/ExtendedClient.js';
@@ -23,6 +24,7 @@ type Song = {
 };
 
 const TIME_BETWEEN_SONGS = 2000;
+const STRING_SIMILARITY_THRESHOLD = 0.85;
 
 const data = new SlashCommandBuilder()
 	.setName('start-quiz')
@@ -227,8 +229,11 @@ async function playTrivia(
 			return;
 		}
 
-		const guessedSinger = singers?.some((singer) => guess.includes(singer));
-		const guessedTitle = guess.includes(title);
+		const guessedSinger = singers?.some((singer) => {
+			const sim = similarity(guess, singer);
+			return sim > STRING_SIMILARITY_THRESHOLD;
+		});
+		const guessedTitle = similarity(guess, title) > STRING_SIMILARITY_THRESHOLD;
 		let pointsAwarded = 0;
 		let reacted = false;
 

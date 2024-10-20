@@ -1,4 +1,16 @@
+import leven from 'leven';
+
 type LeaderBoardItem = [string, number];
+
+function levenshteinDistance(a: string, b: string): number {
+	return leven(a, b);
+}
+
+export function similarity(a: string, b: string): number {
+	const distance = levenshteinDistance(a, b);
+	const maxLength = Math.max(a.length, b.length);
+	return (maxLength - distance) / maxLength;
+}
 
 export function getRandom<T>(arr: T[], n: number): T[] {
 	if (n > arr.length) throw new RangeError('getRandom: more elements taken than available!');
