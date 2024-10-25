@@ -34,6 +34,16 @@ const data = new SlashCommandBuilder()
 			.setName('number_of_songs')
 			.setDescription('Number of songs to play in the quiz (default 15)')
 			.setRequired(false),
+	)
+	.addStringOption((option) =>
+		option
+			.setName('source')
+			.setDescription('Select the song source: default or recent')
+			.setRequired(false)
+			.addChoices(
+				{ name: 'default', value: '3k-songs' },
+				{ name: 'recent', value: 'recent-songs' },
+			),
 	);
 
 async function execute(interaction: ChatInputCommandInteraction<CacheType>): Promise<void> {
@@ -61,7 +71,8 @@ async function execute(interaction: ChatInputCommandInteraction<CacheType>): Pro
 		return;
 	}
 
-	const songPath = './db/music/3k-songs.json';
+	const source = interaction.options.getString('source') || '3k-songs';
+	const songPath = `./db/music/${source}.json`;
 	const jsonSongs = fs.readFileSync(songPath, 'utf-8');
 	const songsArray = getRandom(JSON.parse(jsonSongs) as Song[], numberOfSongs);
 
