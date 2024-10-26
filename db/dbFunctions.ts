@@ -64,6 +64,9 @@ function getGlobalLeaderboard(
 	dbName: string = './db/music/globalLeaderboard.json',
 ): { userId: string; points: number }[] {
 	try {
+		if (!fs.existsSync(dbName)) {
+			fs.writeFileSync(dbName, JSON.stringify([]));
+		}
 		const data = fs.readFileSync(dbName, 'utf8');
 		return JSON.parse(data) as { userId: string; points: number }[];
 	} catch (error) {
