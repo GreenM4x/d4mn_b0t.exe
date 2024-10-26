@@ -14,7 +14,7 @@ import {
 	capitalizeWords,
 	similarity,
 } from '../shared/music/utils.js';
-import { getGlobalLeaderboard, updateGlobalLeaderboard } from '../db/dbFunctions.js';
+import { updateGlobalLeaderboard } from '../db/dbFunctions.js';
 import type { Player, Track, TrackResult } from 'shoukaku';
 import ExtendedClient from '../shared/music/ExtendedClient.js';
 

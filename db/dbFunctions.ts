@@ -60,21 +60,26 @@ function writeDb(obj: Binder, dbName: string = 'db.json'): void {
 	}
 }
 
-function getGlobalLeaderboard(dbName: string = 'globalLeaderboard.json'): { userId: string, points: number }[] {
+function getGlobalLeaderboard(
+	dbName: string = './db/music/globalLeaderboard.json',
+): { userId: string; points: number }[] {
 	try {
 		const data = fs.readFileSync(dbName, 'utf8');
-		return JSON.parse(data) as { userId: string, points: number }[];
+		return JSON.parse(data) as { userId: string; points: number }[];
 	} catch (error) {
 		console.error('Error reading global leaderboard:', error);
 		return [];
 	}
 }
 
-function updateGlobalLeaderboard(newScores: Map<string, number>, dbName: string = 'globalLeaderboard.json'): void {
+function updateGlobalLeaderboard(
+	newScores: Map<string, number>,
+	dbName: string = './db/music/globalLeaderboard.json',
+): void {
 	try {
 		const leaderboard = getGlobalLeaderboard(dbName);
 		newScores.forEach((points, userId) => {
-			const userEntry = leaderboard.find(entry => entry.userId === userId);
+			const userEntry = leaderboard.find((entry) => entry.userId === userId);
 			if (userEntry) {
 				userEntry.points += points;
 			} else {

@@ -14,7 +14,6 @@ import ExtendedClient from './shared/music/ExtendedClient.js';
 import { setBoosterPackInfo, setCardInfo } from './shared/state/global/global.state.js';
 import { type CardData } from './shared/models/card.models.js';
 import { BoosterPackData } from './shared/models/boosterpack.models.js';
-import { data as quizLeaderboardData, execute as quizLeaderboardExecute } from './commands/quiz-leaderboard.js';
 
 type CustomCommand = {
 	data: SlashCommandBuilder;
@@ -71,7 +70,6 @@ async function loadCommands() {
 			console.error(error);
 		}
 	}
-	client.commands.set(quizLeaderboardData.name, { data: quizLeaderboardData, execute: quizLeaderboardExecute });
 }
 
 void loadCardInfo();
