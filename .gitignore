@@ -5,3 +5,8 @@ db/images
 db/cardInfo.json
 db/booster_packs
 dist
+.venv
+**/jupyiter-notebooks/*.json
+**/jupyiter-notebooks/*.csv
+**/jupyiter-notebooks/stores
+**/resources/scripts/*.json
