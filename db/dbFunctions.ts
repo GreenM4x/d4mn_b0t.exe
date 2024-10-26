@@ -60,4 +60,31 @@ function writeDb(obj: Binder, dbName: string = 'db.json'): void {
 	}
 }
 
-export { readDb, writeDb, getUserData };
+function getGlobalLeaderboard(dbName: string = 'globalLeaderboard.json'): { userId: string, points: number }[] {
+	try {
+		const data = fs.readFileSync(dbName, 'utf8');
+		return JSON.parse(data) as { userId: string, points: number }[];
+	} catch (error) {
+		console.error('Error reading global leaderboard:', error);
+		return [];
+	}
+}
+
+function updateGlobalLeaderboard(newScores: Map<string, number>, dbName: string = 'globalLeaderboard.json'): void {
+	try {
+		const leaderboard = getGlobalLeaderboard(dbName);
+		newScores.forEach((points, userId) => {
+			const userEntry = leaderboard.find(entry => entry.userId === userId);
+			if (userEntry) {
+				userEntry.points += points;
+			} else {
+				leaderboard.push({ userId, points });
+			}
+		});
+		fs.writeFileSync(dbName, JSON.stringify(leaderboard));
+	} catch (error) {
+		console.error('Error updating global leaderboard:', error);
+	}
+}
+
+export { readDb, writeDb, getUserData, getGlobalLeaderboard, updateGlobalLeaderboard };

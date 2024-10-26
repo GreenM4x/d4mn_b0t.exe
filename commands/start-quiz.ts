@@ -14,6 +14,7 @@ import {
 	capitalizeWords,
 	similarity,
 } from '../shared/music/utils.js';
+import { getGlobalLeaderboard, updateGlobalLeaderboard } from '../db/dbFunctions.js';
 import type { Player, Track, TrackResult } from 'shoukaku';
 import ExtendedClient from '../shared/music/ExtendedClient.js';
 
@@ -196,6 +197,10 @@ async function playTrivia(
 		void client.music?.leaveVoiceChannel(player.guildId);
 		client.triviaMap.delete(guildId);
 		client.quizActive[guildId] = false;
+
+		// Update the global leaderboard
+		updateGlobalLeaderboard(score);
+
 		return;
 	}
 
