@@ -96,10 +96,11 @@ You'll have to guess the **artist name** and the **song name**.\n
 + 1 point for the artist name
 + 1 point for the song name
 + 3 points for both
-\`\`\`\n
+\`\`\`
 You can type \`skip\` to vote for passing a song.\n
 :fire: Sit back relax, the music quiz is starting in **10 seconds**`,
-		);
+		)
+		.setFooter({ text: `Playing songs from ${source}` });
 	await interaction.followUp({ embeds: [startTriviaEmbed] });
 
 	if (!player) {
@@ -167,9 +168,9 @@ async function playCountdownTrack(player: Player) {
 				'QAAA0AMANDEwIFNlY29uZCBDb3VudERvd24gVGltZXIgV2l0aCBWb2ljZSBUbyBTdGFydCBBIFNob3cADlJhaW5ib3cgVGltZXJzAAAAAAAAxzgAC0hfYkIwc0FxTE5nAAEAK2h0dHBzOi8vd3d3LnlvdXR1YmUuY29tL3dhdGNoP3Y9SF9iQjBzQXFMTmcBADBodHRwczovL2kueXRpbWcuY29tL3ZpL0hfYkIwc0FxTE5nL21xZGVmYXVsdC5qcGcAAAd5b3V0dWJlAAAAAAAAAAA=',
 		},
 	});
-	await player.seekTo(19000);
 	await player.setGlobalVolume(80);
 	await player.setTimescale({ speed: 1.4 });
+	await player.seekTo(19000);
 }
 
 async function playTrivia(
@@ -199,7 +200,7 @@ async function playTrivia(
 		client.quizActive[guildId] = false;
 
 		// Update the global leaderboard
-		updateGlobalLeaderboard(score);
+		updateGlobalLeaderboard(score, guildId);
 
 		return;
 	}
@@ -214,7 +215,10 @@ async function playTrivia(
 	}
 	const randomStart = Math.floor(Math.random() * (maxStart - minStart + 1)) + minStart;
 	await player.playTrack({ track: { encoded: currentTrack.encoded } });
-	console.log('Playing track:', currentTrack.info?.title + ' - ' + currentTrack.info?.author);
+	console.log(
+		'Playing track:',
+		songsArray?.[index]?.title + ' - ' + songsArray?.[index]?.singers.join(', '),
+	);
 	await player.seekTo(randomStart);
 
 	let songNameFoundBy: string | null = null;
@@ -277,7 +281,7 @@ async function playTrivia(
 			score.set(msg.author.id, currentScore + pointsAwarded);
 			if (songSingerFoundBy && songNameFoundBy && songSingerFoundBy === songNameFoundBy) {
 				void interaction.channel?.send(
-					`<@${msg.author.id}>You guessed both correct! You earn **${pointsAwarded} points** :tada:`,
+					`<@${msg.author.id}>You guessed both correct! :tada: You earn a total of **${pointsAwarded + 1} points**.`,
 				);
 			} else {
 				void interaction.channel?.send(

@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
-import { getGlobalLeaderboard } from '../db/dbFunctions.js';
+import { getAllGlobalLeaderboard } from '../db/dbFunctions.js';
 import { getLeaderBoard } from '../shared/music/utils.js';
 
 const data = new SlashCommandBuilder()
@@ -7,7 +7,15 @@ const data = new SlashCommandBuilder()
 	.setDescription('Displays the global leaderboard for the music quiz');
 
 async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
-	const leaderboard = getGlobalLeaderboard();
+	const { guildId } = interaction;
+	if (!guildId) {
+		await interaction.reply({
+			content: 'This command can only be used in a server.',
+			ephemeral: true,
+		});
+		return;
+	}
+	const leaderboard = getAllGlobalLeaderboard()[guildId];
 
 	if (!leaderboard || leaderboard.length === 0) {
 		await interaction.reply({

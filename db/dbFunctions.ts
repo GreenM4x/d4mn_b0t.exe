@@ -1,6 +1,13 @@
 import fs from 'fs';
 import { type Binder } from '../shared/models/binder.models.js';
 
+type AllGlobalLeaderBoards = {
+	[guildId: string]: {
+		userId: string;
+		points: number;
+	}[];
+};
+
 function readDb(dbName: string = 'db.json'): Binder[] {
 	try {
 		// read JSON object from file
@@ -60,27 +67,31 @@ function writeDb(obj: Binder, dbName: string = 'db.json'): void {
 	}
 }
 
-function getGlobalLeaderboard(
+function getAllGlobalLeaderboard(
 	dbName: string = './db/music/globalLeaderboard.json',
-): { userId: string; points: number }[] {
+): AllGlobalLeaderBoards {
 	try {
 		if (!fs.existsSync(dbName)) {
-			fs.writeFileSync(dbName, JSON.stringify([]));
+			fs.writeFileSync(dbName, JSON.stringify({}));
 		}
 		const data = fs.readFileSync(dbName, 'utf8');
-		return JSON.parse(data) as { userId: string; points: number }[];
+		const leaderboards = JSON.parse(data) as AllGlobalLeaderBoards;
+		return leaderboards;
 	} catch (error) {
 		console.error('Error reading global leaderboard:', error);
-		return [];
+		return {};
 	}
 }
 
 function updateGlobalLeaderboard(
 	newScores: Map<string, number>,
+	guildId: string,
 	dbName: string = './db/music/globalLeaderboard.json',
 ): void {
 	try {
-		const leaderboard = getGlobalLeaderboard(dbName);
+		const allLeaderboards = getAllGlobalLeaderboard(dbName);
+		const leaderboard = allLeaderboards[guildId] || [];
+
 		newScores.forEach((points, userId) => {
 			const userEntry = leaderboard.find((entry) => entry.userId === userId);
 			if (userEntry) {
@@ -89,10 +100,11 @@ function updateGlobalLeaderboard(
 				leaderboard.push({ userId, points });
 			}
 		});
-		fs.writeFileSync(dbName, JSON.stringify(leaderboard));
+		allLeaderboards[guildId] = leaderboard;
+		fs.writeFileSync(dbName, JSON.stringify(allLeaderboards));
 	} catch (error) {
 		console.error('Error updating global leaderboard:', error);
 	}
 }
 
-export { readDb, writeDb, getUserData, getGlobalLeaderboard, updateGlobalLeaderboard };
+export { readDb, writeDb, getUserData, getAllGlobalLeaderboard, updateGlobalLeaderboard };
