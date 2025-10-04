@@ -18,11 +18,11 @@ services:
     labels:
       traefik.enable: false
     volumes:
-      - ../database/db.json:/d4mn_bot.exe/db.json:rw
-      - ../database/cardInfo.json:/d4mn_bot.exe/db/cardInfo.json:rw
-      - ../database/images:/d4mn_bot.exe/db/images:rw
-      - ../database/booster_packs:/d4mn_bot.exe/db/booster_packs:rw
-      - ../database/music/:/d4mn_bot.exe/db/music:rw
+      - /home/lucas/dev/databases/d34m_bot/db.json:/d4mn_bot.exe/db.json:rw
+      - /home/lucas/dev/databases/d34m_bot/cardInfo.json:/d4mn_bot.exe/db/cardInfo.json:rw
+      - /home/lucas/dev/databases/d34m_bot/images:/d4mn_bot.exe/db/images:rw
+      - /home/lucas/dev/databases/d34m_bot/booster_packs:/d4mn_bot.exe/db/booster_packs:rw
+      - /home/lucas/dev/databases/d34m_bot/music:/d4mn_bot.exe/db/music:rw
 
     networks:
       - web
